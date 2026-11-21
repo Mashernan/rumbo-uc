@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Prototipo navegable de RUMBO_UC: alertas tempranas, tutoría, mentoría y comunidad de estudio. Datos ficticios.">
+<title>RUMBO_UC – Prototipo navegable</title>
+<style>
+:root{
+  --ink:#14212b; --ink2:#41525f; --muted:#5f6f7b; --line:#d8e0e6; --bg:#f3f6f8; --card:#ffffff;
+  --brand:#0b5563; --brand-d:#083e48; --brand-l:#e3f1f3; --accent:#c2410c; --accent-l:#fdeee4;
+  --ok:#1e7a3a; --ok-l:#e5f4ea; --warn:#9a5b00; --warn-l:#fff2d6; --bad:#b3261e; --bad-l:#fde8e6;
+  --focus:#1d4ed8; --radius:12px; --shadow:0 1px 2px rgba(20,33,43,.06),0 4px 14px rgba(20,33,43,.06);
+}
+body.hc{ --ink:#000; --ink2:#000; --muted:#1f1f1f; --line:#000; --bg:#fff; --card:#fff; --brand:#003c46; --brand-d:#002830; --brand-l:#fff; --accent:#8a2a00; --ok:#0a5a24; --warn:#6b3e00; --bad:#8c1009; }
+body.hc .card, body.hc .btn, body.hc input, body.hc select, body.hc textarea{border-width:2px;border-color:#000}
+*{box-sizing:border-box}
+html{font-size:16px}
+html.lg{font-size:19px}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.45}
+a{color:var(--brand)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:0;background:#fff;padding:8px;z-index:99}
+.skip:focus{left:8px}
+h1,h2,h3{line-height:1.2;margin:0 0 .5rem}
+h1{font-size:1.5rem} h2{font-size:1.2rem} h3{font-size:1.02rem}
+p{margin:.2rem 0 .7rem}
+small,.muted{color:var(--muted)}
+/* barra superior */
+.topbar{position:sticky;top:0;z-index:20;background:var(--brand-d);color:#fff;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;padding:.55rem 1rem}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:800;letter-spacing:.3px;color:#fff;text-decoration:none}
+.topnav{display:flex;gap:.25rem;flex-wrap:wrap}
+.topnav a{color:#dff3f5;text-decoration:none;padding:.35rem .6rem;border-radius:8px;font-size:.92rem}
+.topnav a[aria-current="page"],.topnav a:hover{background:rgba(255,255,255,.14);color:#fff}
+.a11y{margin-left:auto;display:flex;gap:.35rem;align-items:center}
+.a11y button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:.3rem .55rem;font:inherit;font-size:.85rem;cursor:pointer}
+.a11y button[aria-pressed="true"]{background:#fff;color:var(--brand-d)}
+.proto-note{background:var(--warn-l);color:#5a3a00;font-size:.85rem;text-align:center;padding:.3rem .8rem;border-bottom:1px solid #f0d9a8}
+main{padding:1.2rem;max-width:1280px;margin:0 auto}
+/* componentes */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem}
+.grid{display:grid;gap:1rem}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:44px;padding:.55rem 1rem;border-radius:10px;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--brand-d)}
+.btn.sec{background:#fff;color:var(--brand)}
+.btn.sec:hover{background:var(--brand-l)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--brand)}
+.btn.danger{background:var(--bad);border-color:var(--bad)}
+.btn.sm{min-height:36px;padding:.3rem .7rem;font-size:.9rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.12rem .55rem;font-size:.8rem;font-weight:700;border:1px solid transparent;white-space:nowrap}
+.hu{background:#eef1ff;color:#2a3a9b;border-color:#cdd5ff}
+body.nohu .hu{display:none}
+.alto{background:var(--bad-l);color:var(--bad);border-color:#f3b8b3}
+.medio{background:var(--warn-l);color:var(--warn);border-color:#f1d091}
+.bajo{background:var(--ok-l);color:var(--ok);border-color:#b8e0c4}
+.neutral{background:#eef2f5;color:var(--ink2);border-color:var(--line)}
+.dot{width:.7rem;height:.7rem;border-radius:50%;display:inline-block}
+.dot.alto{background:var(--bad)} .dot.medio{background:#d68a00} .dot.bajo{background:var(--ok)}
+label{display:block;font-weight:600;margin:.6rem 0 .25rem;font-size:.95rem}
+.hint{font-size:.82rem;color:var(--muted);margin-top:.2rem}
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{width:100%;min-height:44px;padding:.55rem .65rem;border:1px solid #b9c5ce;border-radius:10px;font:inherit;color:var(--ink);background:#fff}
+textarea{min-height:90px;resize:vertical}
+.err{color:var(--bad);font-size:.85rem;margin-top:.25rem;font-weight:600}
+[aria-invalid="true"]{border-color:var(--bad)!important;background:#fffafa}
+.check{display:flex;gap:.6rem;align-items:flex-start;font-weight:500}
+.check input{width:22px;height:22px;margin-top:.1rem;flex:none}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);background:#f7f9fa}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#f6fbfc}
+.kpi{display:flex;flex-direction:column;gap:.15rem}
+.kpi b{font-size:1.6rem}
+.banner{border-radius:10px;padding:.7rem .9rem;display:flex;gap:.6rem;align-items:flex-start;margin:.4rem 0 .8rem}
+.banner.bad{background:var(--bad-l);color:#7a1a14;border:1px solid #f3b8b3}
+.banner.warn{background:var(--warn-l);color:#5a3a00;border:1px solid #f1d091}
+.banner.ok{background:var(--ok-l);color:#14532d;border:1px solid #b8e0c4}
+.banner.info{background:var(--brand-l);color:var(--brand-d);border:1px solid #b6dbe0}
+.progress{height:10px;background:#e3e9ee;border-radius:999px;overflow:hidden}
+.progress>span{display:block;height:100%;background:var(--brand)}
+#toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;gap:.5rem;align-items:center;z-index:50;max-width:92vw}
+.toast{background:#14212b;color:#fff;padding:.7rem 1rem;border-radius:10px;box-shadow:var(--shadow)}
+.modal-bg{position:fixed;inset:0;background:rgba(10,20,28,.45);display:flex;align-items:center;justify-content:center;z-index:40;padding:1rem}
+.modal{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:1.2rem;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+/* app móvil */
+.app-stage{display:flex;gap:1.5rem;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.phone{width:390px;max-width:100%;height:780px;background:#fff;border:10px solid #1b2430;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(20,33,43,.18);position:relative}
+.appbar{background:var(--brand);color:#fff;padding:.8rem 1rem .7rem;display:flex;align-items:center;gap:.5rem;min-height:56px}
+.appbar h1{font-size:1.08rem;margin:0;color:#fff}
+.appbar .back{background:transparent;border:0;color:#fff;font-size:1.4rem;min-width:44px;min-height:44px;cursor:pointer;border-radius:8px}
+.app-content{flex:1;overflow:auto;padding:1rem;background:#f7f9fa}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:#fff}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:.1rem;padding:.45rem .2rem .55rem;font-size:.72rem;color:var(--muted);text-decoration:none;min-height:56px;justify-content:center}
+.tabbar a[aria-current="page"]{color:var(--brand);font-weight:700}
+.tabbar svg{width:22px;height:22px}
+.offline-bar{background:#33414c;color:#fff;font-size:.8rem;padding:.35rem .8rem;text-align:center}
+.app-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.85rem;margin-bottom:.75rem}
+.list-item{display:flex;gap:.7rem;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--line)}
+.list-item:last-child{border-bottom:0}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--brand-l);color:var(--brand-d);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.bubble{max-width:80%;padding:.55rem .75rem;border-radius:14px;margin:.3rem 0;font-size:.93rem}
+.bubble.me{background:var(--brand);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.bubble.them{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat{display:flex;flex-direction:column}
+.stars button{background:none;border:0;font-size:1.6rem;cursor:pointer;color:#c7ced4;min-width:40px;min-height:40px}
+.stars button.on{color:#d68a00}
+.slot{border:1px solid var(--line);border-radius:10px;padding:.55rem;text-align:center;background:#fff;cursor:pointer;font:inherit;min-height:44px}
+.slot[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.slot[disabled]{background:#eef1f3;color:#97a3ad;text-decoration:line-through;cursor:not-allowed}
+.opt{display:flex;gap:.6rem;align-items:center;border:1px solid var(--line);border-radius:10px;padding:.65rem .75rem;margin:.4rem 0;background:#fff;cursor:pointer;font-weight:500}
+.opt:has(input:checked){border-color:var(--brand);background:var(--brand-l)}
+.opt input{width:20px;height:20px}
+/* ficha de la interfaz */
+.ficha{width:340px;max-width:100%;font-size:.9rem}
+.ficha h3{display:flex;gap:.5rem;align-items:center}
+.ficha ul{margin:.2rem 0 .6rem;padding-left:1.1rem}
+.ficha dt{font-weight:700;margin-top:.5rem;color:var(--ink2);font-size:.8rem;text-transform:uppercase;letter-spacing:.3px}
+.ficha dd{margin:.15rem 0}
+body.nofichas .ficha,body.nofichas .ficha-btn{display:none}
+/* plataforma web */
+.web{display:grid;grid-template-columns:240px 1fr;gap:1rem;align-items:start}
+.side{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:.6rem;position:sticky;top:80px}
+.side .who{padding:.6rem;border-bottom:1px solid var(--line);margin-bottom:.4rem}
+.side a{display:flex;gap:.5rem;align-items:center;padding:.55rem .6rem;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:.93rem;min-height:40px}
+.side a[aria-current="page"]{background:var(--brand-l);color:var(--brand-d);font-weight:700}
+.side a:hover{background:#f1f6f7}
+.side .sec-title{font-size:.72rem;text-transform:uppercase;color:var(--muted);padding:.6rem .6rem .2rem;letter-spacing:.4px}
+.pagehead{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1rem}
+.pagehead h1{margin:0}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.6rem;margin-bottom:.8rem}
+.filters label{margin:0 0 .2rem;font-size:.8rem}
+.bar{height:8px;border-radius:999px;background:#e3e9ee;overflow:hidden;width:100%}
+.bar>span{display:block;height:100%}
+.ficha-drawer{position:fixed;right:0;top:0;bottom:0;width:380px;max-width:100%;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.15);z-index:45;padding:1.1rem;overflow:auto}
+.ficha-btn{position:fixed;right:16px;bottom:16px;z-index:30;box-shadow:var(--shadow)}
+.hero{background:linear-gradient(135deg,var(--brand-d),var(--brand));color:#fff;border-radius:16px;padding:1.6rem;margin-bottom:1rem}
+.hero h1{font-size:1.8rem;color:#fff}
+.hero p{color:#d8eef1;max-width:760px}
+.entry{display:flex;flex-direction:column;gap:.5rem}
+.entry .btn{align-self:flex-start}
+.flow{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.85rem;margin:.3rem 0 .8rem}
+.flow a{background:var(--brand-l);color:var(--brand-d);padding:.25rem .55rem;border-radius:8px;text-decoration:none;font-weight:600}
+.flow span{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:860px){
+  .web{grid-template-columns:1fr}
+  .side{position:static}
+  .ficha{width:100%}
+}
+@media (max-width:480px){
+  main{padding:.5rem}
+  .phone{border:0;border-radius:0;height:calc(100vh - 110px);width:100%;box-shadow:none}
+}
+@media (prefers-reduced-motion:no-preference){.btn,.slot,.opt{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<a class="skip" href="#view">Saltar al contenido</a>
+<div class="proto-note" role="note">Prototipo navegable de todas las interfaces (Release 1 y 2) · Datos ficticios · <a href="index.html">Volver al PMV</a></div>
+<header class="topbar">
+  <a class="brand" href="#inicio" aria-label="RUMBO_UC, ir al inicio del prototipo">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M16 5 L20 16 L16 27 L12 16 Z" fill="#fbbf8a"/><circle cx="16" cy="16" r="2.4" fill="#fff"/></svg>
+    RUMBO_UC
+  </a>
+  <nav class="topnav" aria-label="Secciones del prototipo">
+    <a href="#inicio" data-top="inicio">Inicio</a>
+    <a href="#app-login" data-top="app">App del estudiante</a>
+    <a href="#web-login" data-top="web">Plataforma web</a>
+    <a href="#mapa" data-top="mapa">Mapa de pantallas</a>
+  </nav>
+  <div class="a11y" role="group" aria-label="Opciones de visualización">
+    <button id="tg-size" aria-pressed="false" title="Aumentar el tamaño del texto">A+</button>
+    <button id="tg-hc" aria-pressed="false" title="Alto contraste">Contraste</button>
+    <button id="tg-hu" aria-pressed="true" title="Mostrar las etiquetas de historia de usuario">HU</button>
+    <button id="tg-ficha" aria-pressed="true" title="Mostrar la ficha de cada interfaz">Fichas</button>
+  </div>
+</header>
+<main id="view" tabindex="-1"></main>
+<div id="layer"></div>
+<div id="toasts" aria-live="polite"></div>
+<script>
+"use strict";
+/* ====================== utilidades ====================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const go = h => { if (location.hash === "#" + h) render(); else location.hash = h; };
+function toast(msg){ const l=$("#toasts"); const t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg; l.appendChild(t); setTimeout(()=>t.remove(),3200); }
+function modal(title, bodyHTML, actions){
+  const l=$("#layer"); const bg=document.createElement("div"); bg.className="modal-bg";
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdl-t"><h2 id="mdl-t">${title}</h2><div>${bodyHTML}</div><div class="row" style="justify-content:flex-end;margin-top:1rem" id="mdl-a"></div></div>`;
+  (actions||[{label:"Cerrar"}]).forEach(a=>{ const b=document.createElement("button"); b.className="btn "+(a.cls||""); b.textContent=a.label; b.onclick=()=>{ if(a.fn && a.fn(bg)===false) return; bg.remove(); }; $("#mdl-a",bg).appendChild(b); });
+  bg.addEventListener("keydown",e=>{ if(e.key==="Escape") bg.remove(); });
+  l.appendChild(bg); const f=$("button,input,textarea,select",bg.querySelector(".modal div")) || $("#mdl-a button",bg); f && f.focus();
+  return bg;
+}
+function setErr(input, msg){
+  const id = input.id + "-err"; let e = document.getElementById(id);
+  if(!msg){ input.removeAttribute("aria-invalid"); if(e) e.remove(); return true; }
+  input.setAttribute("aria-invalid","true"); input.setAttribute("aria-describedby", id);
+  if(!e){ e=document.createElement("div"); e.className="err"; e.id=id; e.setAttribute("role","alert"); input.insertAdjacentElement("afterend", e); }
+  e.textContent = msg; return false;
+}
+const store = { get(k,d){ try{ const v=localStorage.getItem("rumboproto_"+k); return v?JSON.parse(v):d; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem("rumboproto_"+k, JSON.stringify(v)); }catch(e){} } };
+const icon = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.2 4.6 1.9 5.4 5.4"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.4 4.2-6.5 8-6.5s7 2.1 8 6.5"/></svg>'
+};
+
+/* ====================== datos ficticios ====================== */
+const NOMBRES = ["Lucía Ramos","Diego Huamán","Valeria Torres","Joaquín Paredes","Camila Rojas","Mateo Quispe","Ariana Salazar","Sebastián Lazo","Fernanda Ccori","Rodrigo Medina","Daniela Ponce","Gabriel Inga","Mariana Vega","Thiago Cárdenas","Ximena Arias","Bruno Espinoza","Antonella Ríos","Adrián Soto","Luana Mendoza","Iker Flores","Renata Chávez","Samuel Ortiz","Abril Castro","Leonardo Vargas","Micaela Núñez","Gael Palomino","Zoe Aquino","Emilio Benavides","Alessia Ruiz","Facundo Tello","Isabella Cruz","Matías Gamarra","Julieta Montes","Santiago Rivas","Kiara Lozano","Nicolás Yupanqui","Ainhoa Campos","Dylan Mamani","Ariadna León","Franco Villena"];
+const CARRERAS = ["Ing. de Sistemas","Ing. Industrial"];
+const CURSOS = ["Matemática Básica","Comunicación","Fundamentos de Programación","Física I","Química General","Introducción a la Ingeniería"];
+function rnd(seed){ let x=Math.sin(seed)*10000; return x-Math.floor(x); }
+const STUDENTS = NOMBRES.map((n,i)=>{
+  const r1=rnd(i+1), r2=rnd(i+11), r3=rnd(i+21), r4=rnd(i+31);
+  const asist=Math.round(55+r1*45), prom=Math.round((7+r2*11)*10)/10, desap=Math.floor(r3*4), inact=Math.floor(r4*16);
+  return { id:i+1, cod:"U2026"+String(1000+i*37).padStart(5,"0"), nombre:n, carrera:CARRERAS[i%2], ciclo:1+(i%2), curso:CURSOS[i%6],
+           asist, prom, desap, inact, hist:[0,1,2].map(k=>Math.round(20+rnd(i*7+k)*60)), contactado:i%5===0, tutor:i<40?"rq":"otro" };
+});
+STUDENTS[0] = Object.assign(STUDENTS[0], {asist:62, prom:9.4, desap:2, inact:5, hist:[35,52,68]});
+STUDENTS[1] = Object.assign(STUDENTS[1], {asist:68, prom:10.2, desap:2, inact:3, hist:[40,48,61]});
+STUDENTS[2] = Object.assign(STUDENTS[2], {asist:71, prom:10.8, desap:1, inact:11, hist:[30,40,72]});
+const OTRO = {id:99, cod:"U202609911", nombre:"Estudiante de otro tutor", carrera:"Ing. Civil", ciclo:1, curso:"Física I", asist:80, prom:13, desap:0, inact:1, hist:[20,20,20], tutor:"otro"};
+let RULES = store.get("rules", {asist:75, prom:11, desap:2, inact:7, w:{asist:35, prom:30, desap:20, inact:15}});
+function risk(s){
+  const f = {asist:s.asist<RULES.asist, prom:s.prom<RULES.prom, desap:s.desap>=RULES.desap, inact:s.inact>=RULES.inact};
+  const score = (f.asist?RULES.w.asist:0)+(f.prom?RULES.w.prom:0)+(f.desap?RULES.w.desap:0)+(f.inact?RULES.w.inact:0);
+  const nivel = score>=60?"alto":score>=30?"medio":"bajo";
+  return {score, nivel, f};
+}
+const NIVEL_TXT = {alto:"Riesgo alto", medio:"Riesgo medio", bajo:"Riesgo bajo"};
+const lvl = n => `<span class="chip ${n}"><span class="dot ${n}" aria-hidden="true"></span>${NIVEL_TXT[n]}</span>`;
+const TUTORIAS = store.get("tutorias", [{est:1, fecha:"2026-11-12", modalidad:"Virtual", acuerdos:"Asistir a la asesoría de Matemática Básica los martes y organizar un horario semanal de estudio.", seg:"2026-11-26"}]);
+const MATERIALES = [
+  {id:1, curso:"Matemática Básica", titulo:"Resumen de límites con ejercicios resueltos", autor:"Ariana Salazar", tipo:"PDF", tam:"1.8 MB", rating:4.6, votos:23, comentarios:["Me ayudó mucho para la PC2.","Muy claro el paso a paso."], descargado:true},
+  {id:2, curso:"Matemática Básica", titulo:"Formulario de derivadas", autor:"Mateo Quispe", tipo:"PDF", tam:"420 KB", rating:4.2, votos:15, comentarios:["Útil para repasar."], descargado:false},
+  {id:3, curso:"Fundamentos de Programación", titulo:"Guía de ejercicios de bucles en Python", autor:"Gabriel Inga", tipo:"DOCX", tam:"760 KB", rating:4.8, votos:31, comentarios:["Excelente."], descargado:true},
+  {id:4, curso:"Física I", titulo:"Mapa conceptual de cinemática", autor:"Renata Chávez", tipo:"PNG", tam:"2.3 MB", rating:3.9, votos:9, comentarios:[], descargado:false}
+];
+const REPORTES = [{id:1, material:"Formulario de derivadas", motivo:"Contiene errores en la fórmula de la regla de la cadena", por:"Diego Huamán", fecha:"2026-11-19"},{id:2, material:"Apuntes copiados de un libro", motivo:"Posible infracción de derechos de autor", por:"Camila Rojas", fecha:"2026-11-20"}];
+const MENTORES = [
+  {id:1, nombre:"Andrea Salcedo", ciclo:8, carrera:"Ing. de Sistemas", afinidad:92, intereses:"Programación, Matemática", cupo:3, verif:true, horas:18},
+  {id:2, nombre:"Kevin Torres", ciclo:7, carrera:"Ing. de Sistemas", afinidad:85, intereses:"Física, hábitos de estudio", cupo:2, verif:true, horas:24},
+  {id:3, nombre:"Paola Díaz", ciclo:9, carrera:"Ing. de Sistemas", afinidad:81, intereses:"Matemática, Química", cupo:4, verif:true, horas:31},
+  {id:4, nombre:"Luis Aranda", ciclo:6, carrera:"Ing. de Sistemas", afinidad:88, intereses:"Programación", cupo:5, verif:true, horas:12},
+  {id:5, nombre:"Rocío Huerta", ciclo:7, carrera:"Ing. Industrial", afinidad:0, intereses:"Estadística", cupo:0, verif:false, horas:0}
+];
+const GRUPOS = [{id:1, nombre:"Repaso PC3 – Matemática Básica", curso:"Matemática Básica", miembros:6, unido:true},{id:2, nombre:"Python desde cero", curso:"Fundamentos de Programación", miembros:9, unido:false},{id:3, nombre:"Física I – problemas", curso:"Física I", miembros:4, unido:false}];
+const CHATS = { mentor:[{me:false, t:"¡Hola, Lucía! Acepté tu solicitud. ¿En qué curso te gustaría empezar?"},{me:true, t:"Hola, Andrea. Matemática Básica: me cuestan los límites."},{me:false, t:"Perfecto. ¿Te parece una sesión el jueves a las 6 p. m.?"}],
+  grupo:[{me:false, who:"Mateo", t:"¿Alguien resolvió el ejercicio 4 de la práctica?"},{me:false, who:"Ariana", t:"Sí, subí el resumen al repositorio del curso."},{me:true, who:"Tú", t:"¡Gracias! Lo reviso hoy."}] };
+let APP = { consent: store.get("consent", false), offline:false, revocado:false, mentorPedido:null, cita:null, test: store.get("test", {i:0, r:{}}) };
+let WEB = { role:null, filtro:{q:"", nivel:"", curso:"", carrera:""} };
+const AUDIT = [
+  {f:"2026-11-21 09:14", u:"rq.tutor@ejemplo.edu", a:"Ver detalle de estudiante", r:"U202601037", res:"Permitido"},
+  {f:"2026-11-21 09:16", u:"rq.tutor@ejemplo.edu", a:"Ver detalle de estudiante", r:"U202609911", res:"Denegado"},
+  {f:"2026-11-21 08:40", u:"ti.carga@ejemplo.edu", a:"Importar datos académicos", r:"notas_2026-2_s10.csv", res:"Permitido"},
+  {f:"2026-11-20 22:03", u:"estudiante@ejemplo.edu", a:"Exportar reporte institucional", r:"Reporte de retención", res:"Denegado"},
+  {f:"2026-11-20 17:25", u:"cb.coord@ejemplo.edu", a:"Modificar reglas del semáforo", r:"Umbral de asistencia 75 %", res:"Permitido"}
+];
+const CARGAS = store.get("cargas", [{f:"2026-11-21 08:40", u:"ti.carga@ejemplo.edu", a:"notas_2026-2_s10.csv", p:1240, x:0},{f:"2026-11-14 08:35", u:"ti.carga@ejemplo.edu", a:"notas_2026-2_s09.csv", p:1198, x:6}]);
+
+/* ====================== fichas de interfaz (Ítem 9) ====================== */
+const SCREENS = {
+ "app-login":{n:"IU-01", t:"Ingreso con cuenta institucional", hu:["HU15"], d:"Pantalla de bienvenida de la app. El estudiante inicia sesión con su cuenta institucional mediante SSO; la app no pide ni guarda contraseñas.", v:["El correo debe pertenecer al dominio institucional.","Si el SSO no responde, se muestra un mensaje y la opción de reintentar."], r:["Solo usuarios con cuenta institucional activa.","No hay registro manual de usuarios."]},
+ "app-consent":{n:"IU-02", t:"Consentimiento informado", hu:["HU15"], d:"En el primer ingreso, el estudiante lee para qué se usan sus datos y acepta el consentimiento antes de usar la app.", v:["El botón «Aceptar y continuar» se habilita solo al marcar la casilla de aceptación.","Se registra la versión del texto y la fecha de aceptación."], r:["Sin consentimiento no se accede a ninguna función que use datos académicos (Ley N.° 29733)."]},
+ "app-home":{n:"IU-03", t:"Inicio del estudiante con alerta temprana", hu:["HU03","HU18"], d:"Resumen del estudiante: alerta vigente con tono motivador, próximas citas y accesos rápidos a apoyo.", v:["La alerta solo aparece si el nivel cambió a medio o alto.","No se repite la alerta el mismo día si el nivel no cambia."], r:["El estudiante no ve su puntaje numérico, solo el nivel y recomendaciones.","En modo sin conexión solo se muestra contenido descargado."]},
+ "app-alert":{n:"IU-04", t:"Detalle de la alerta y recomendaciones", hu:["HU03"], d:"Explica la alerta con lenguaje motivador y ofrece al menos una acción de apoyo: tutoría, asesoría o recurso.", v:["Siempre muestra al menos una recomendación.","Registra la fecha en que el estudiante abrió la alerta."], r:["No se muestran comparaciones con otros estudiantes."]},
+ "app-test":{n:"IU-05", t:"Test de orientación y hábitos de estudio", hu:["HU05"], d:"Cuestionario de 12 preguntas con barra de avance y opción de guardar y continuar después.", v:["Cada pregunta es obligatoria para avanzar.","El avance se guarda automáticamente al salir."], r:["Máximo 15 preguntas.","Las respuestas solo se comparten con el tutor si el estudiante lo autoriza."]},
+ "app-test-result":{n:"IU-06", t:"Resultado del test", hu:["HU05"], d:"Resumen del perfil de estudio con recomendaciones personalizadas y la opción de compartirlo con el tutor.", v:["El resultado se genera solo con el test completo."], r:["Por defecto, el resultado no se comparte."]},
+ "app-agenda":{n:"IU-07", t:"Agenda de tutorías", hu:["HU08"], d:"El estudiante elige un horario disponible de su tutor y envía la solicitud de cita.", v:["Los horarios ocupados aparecen deshabilitados.","Debe elegir un horario y escribir el motivo (10 a 200 caracteres)."], r:["Solo puede tener una solicitud pendiente a la vez.","Recordatorio automático 24 h antes."]},
+ "app-mentor":{n:"IU-08", t:"Sugerencias de mentor", hu:["HU09"], d:"Muestra al menos 3 mentores verificados de la misma carrera, ordenados por afinidad.", v:["Requiere perfil completo (carrera e intereses).","Solo se puede enviar una solicitud a la vez."], r:["No aparecen mentores con cupo completo (5 mentorados) ni sin verificar."]},
+ "app-mentor-chat":{n:"IU-09", t:"Chat de mentoría", hu:["HU09"], d:"Conversación entre el estudiante y su mentor, habilitada cuando el mentor acepta la solicitud.", v:["El mensaje no puede estar vacío ni superar 500 caracteres."], r:["El chat solo existe después de la aceptación del mentor."]},
+ "app-repo":{n:"IU-10", t:"Repositorio comunitario por curso", hu:["HU11","HU18"], d:"Lista de materiales por curso con búsqueda, calificación y tipo de archivo.", v:["La búsqueda filtra por título y curso."], r:["Sin conexión solo se muestran los materiales descargados (modo lectura)."]},
+ "app-upload":{n:"IU-11", t:"Publicar material", hu:["HU11"], d:"Formulario para compartir un material de estudio en un curso.", v:["Curso obligatorio; título de 5 a 80 caracteres.","Formatos permitidos: PDF, DOCX, PPTX, PNG y JPG; máximo 20 MB.","Todo archivo pasa por un análisis antivirus antes de publicarse."], r:["Un archivo con amenaza se bloquea y no se publica."]},
+ "app-material":{n:"IU-12", t:"Detalle, valoración y reporte del material", hu:["HU12"], d:"El estudiante califica el material de 1 a 5, comenta o lo reporta indicando el motivo.", v:["El reporte exige seleccionar un motivo.","Comentario de máximo 300 caracteres."], r:["Cada estudiante puede valorar una sola vez cada material."]},
+ "app-groups":{n:"IU-13", t:"Grupos de estudio", hu:["HU13"], d:"Lista de grupos por curso; el estudiante puede unirse o crear uno nuevo.", v:["Nombre del grupo de 5 a 60 caracteres y curso obligatorio."], r:["Máximo 15 miembros por grupo."]},
+ "app-group-chat":{n:"IU-14", t:"Chat del grupo de estudio", hu:["HU13"], d:"Mensajería en tiempo real entre los miembros del grupo.", v:["Mensaje no vacío y de máximo 500 caracteres."], r:["Solo los miembros ven los mensajes; un miembro retirado deja de verlos."]},
+ "app-profile":{n:"IU-15", t:"Perfil, privacidad y accesibilidad", hu:["HU15","HU18"], d:"Datos del estudiante, revocación del consentimiento, tamaño de texto, contraste y modo sin conexión.", v:["La revocación pide confirmación y queda registrada con fecha."], r:["Al revocar, se limitan las funciones que usan datos académicos."]},
+ "web-login":{n:"IU-16", t:"Ingreso a la plataforma web", hu:["HU15"], d:"Ingreso por SSO institucional. En el prototipo se elige el rol para simular el acceso.", v:["El rol se toma de la cuenta institucional, no lo elige el usuario (en el prototipo se simula)."], r:["Tutor, coordinador de bienestar y TI ven menús distintos."]},
+ "web-dashboard":{n:"IU-17", t:"Dashboard del tutor", hu:["HU06","HU02"], d:"Lista de tutorados ordenada por nivel de riesgo, con tendencia, indicadores y filtros.", v:["Los filtros responden en menos de 3 s.","Búsqueda por nombre o código."], r:["El tutor solo ve a sus propios tutorados."]},
+ "web-student":{n:"IU-18", t:"Detalle del estudiante y factores de riesgo", hu:["HU02"], d:"Muestra el nivel de riesgo, los factores que lo explican, la tendencia y el historial de tutorías.", v:["Los factores se calculan con las reglas vigentes."], r:["Acceso solo para el tutor asignado y el coordinador; otro acceso se deniega y se audita."]},
+ "web-tutoria":{n:"IU-19", t:"Registro de tutoría", hu:["HU07"], d:"Formulario para registrar la sesión, los acuerdos y el plan de acción, con fecha de seguimiento.", v:["Estudiante y fecha obligatorios; la fecha no puede ser futura.","Acuerdos de 20 a 1000 caracteres.","La fecha de seguimiento debe ser posterior a la sesión."], r:["El registro es confidencial: solo el tutor y el coordinador lo ven."]},
+ "web-avisos":{n:"IU-20", t:"Avisos de riesgo alto y escalamiento", hu:["HU04"], d:"Lista de tutorados en riesgo alto con el tiempo transcurrido; a las 72 h sin contacto el aviso se escala.", v:["Al registrar el contacto, el aviso pasa a «Atendido»."], r:["El escalamiento al coordinador es automático a las 72 h."]},
+ "web-import":{n:"IU-21", t:"Importación de datos académicos", hu:["HU01"], d:"Carga del archivo CSV con notas y asistencia; muestra el resumen de procesados y rechazados y el historial.", v:["Solo archivos .csv de hasta 10 MB.","Columnas obligatorias: codigo, curso, periodo, evaluacion, nota, asistencia.","Nota entre 0 y 20; asistencia entre 0 y 100."], r:["Si hay errores de formato, se rechaza la carga y no se modifican los datos.","Solo el rol TI puede importar."]},
+ "web-reglas":{n:"IU-22", t:"Reglas del semáforo de riesgo", hu:["HU02"], d:"El coordinador ajusta los umbrales y pesos del indicador; el semáforo se recalcula con las nuevas reglas.", v:["Umbrales dentro de rangos válidos.","Los pesos deben sumar 100 %."], r:["Solo el coordinador de bienestar modifica las reglas; el cambio se audita."]},
+ "web-mentores":{n:"IU-23", t:"Gestión de mentores", hu:["HU10"], d:"El coordinador verifica candidatos, revisa horas y genera constancias.", v:["La constancia se habilita al cumplir 20 horas."], r:["Solo mentores verificados reciben solicitudes."]},
+ "web-moderacion":{n:"IU-24", t:"Moderación de materiales", hu:["HU12"], d:"Bandeja de materiales reportados para mantenerlos o retirarlos.", v:["Al retirar un material se exige indicar el motivo al autor."], r:["Solo el coordinador modera."]},
+ "web-reportes":{n:"IU-25", t:"Reportes institucionales", hu:["HU14"], d:"Retención y distribución de riesgo por carrera y ciclo, con comparación de estudiantes con y sin tutoría.", v:["Los filtros de carrera y ciclo son obligatorios para exportar."], r:["Datos agregados: no se muestran estudiantes individuales."]},
+ "web-monitoreo":{n:"IU-26", t:"Rendimiento y disponibilidad", hu:["HU16"], d:"Panel de TI con disponibilidad, tiempo de respuesta p95, tasa de errores y usuarios concurrentes.", v:["Se resaltan en rojo los valores fuera de la meta."], r:["Solo el rol TI accede."]},
+ "web-auditoria":{n:"IU-27", t:"Auditoría de accesos", hu:["HU17"], d:"Registro de accesos permitidos y denegados con usuario, acción, recurso y fecha.", v:["Filtro por resultado."], r:["El registro no se puede editar ni borrar."]},
+ "web-denegado":{n:"IU-28", t:"Acceso denegado", hu:["HU17"], d:"Se muestra cuando un usuario intenta ver un recurso sin permiso; el intento queda auditado.", v:["Se informa el motivo sin exponer datos del recurso."], r:["No se revela si el recurso existe."]}
+};
+const fichaHTML = id => { const s=SCREENS[id]; if(!s) return "";
+  return `<h3><span class="chip neutral">${s.n}</span>${esc(s.t)}</h3>
+  <dl><dt>Historias de usuario</dt><dd>${s.hu.map(h=>`<span class="chip hu">${h}</span>`).join(" ")}</dd>
+  <dt>Descripción</dt><dd>${esc(s.d)}</dd>
+  <dt>Validaciones</dt><dd><ul>${s.v.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></dd>
+  <dt>Restricciones</dt><dd><ul>${s.r.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></dd></dl>`; };
+const huChips = id => (SCREENS[id]?.hu||[]).map(h=>`<span class="chip hu">${h}</span>`).join(" ");
+
+/* ====================== app móvil ====================== */
+const TABS = [["app-home","Inicio",icon.home],["app-agenda","Tutoría",icon.cal],["app-mentor","Mentoría",icon.people],["app-repo","Estudio",icon.book],["app-profile","Perfil",icon.user]];
+const TABMAP = {"app-alert":"app-home","app-test":"app-home","app-test-result":"app-home","app-mentor-chat":"app-mentor","app-upload":"app-repo","app-material":"app-repo","app-groups":"app-repo","app-group-chat":"app-repo"};
+function phone(id, title, inner, opts={}){
+  const tabs = opts.notabs ? "" : `<nav class="tabbar" aria-label="Navegación de la app">${TABS.map(([h,l,ic])=>`<a href="#${h}" ${ (TABMAP[id]||id)===h?'aria-current="page"':''}>${ic}<span>${l}</span></a>`).join("")}</nav>`;
+  const back = opts.back ? `<button class="back" aria-label="Volver" onclick="go('${opts.back}')">‹</button>` : "";
+  return `<div class="app-stage">
+   <section class="phone" aria-label="Vista de la app móvil: ${esc(title)}">
+     <div class="appbar">${back}<h1>${esc(title)}</h1><span class="spacer"></span>${huChips(id).replace(/chip hu/g,'chip hu" style="background:#fff')}</div>
+     ${APP.offline?'<div class="offline-bar" role="status">Sin conexión · Modo lectura</div>':''}
+     <div class="app-content">${inner}</div>${tabs}
+   </section>
+   <aside class="card ficha" aria-label="Ficha de la interfaz">${fichaHTML(id)}</aside></div>`;
+}
+function needConsent(){ if(!APP.consent){ go("app-consent"); return true; } return false; }
+const ME = STUDENTS[0];
+const V = {};
+V["app-login"] = () => phone("app-login","Bienvenida", `
+  <div style="text-align:center;padding:1.5rem .5rem">
+    <svg width="76" height="76" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#e3f1f3" stroke="#0b5563" stroke-width="2"/><path d="M16 5 L20 16 L16 27 L12 16 Z" fill="#c2410c"/><circle cx="16" cy="16" r="2.4" fill="#0b5563"/></svg>
+    <h2 style="margin-top:.8rem">Tu rumbo en la universidad</h2>
+    <p class="muted">Alertas a tiempo, tutoría, mentores y material de estudio en un solo lugar.</p>
+  </div>
+  <button class="btn block" id="sso">Ingresar con mi cuenta institucional</button>
+  <p class="hint" style="text-align:center;margin-top:.6rem">Usarás el inicio de sesión de tu universidad. RUMBO_UC no guarda tu contraseña.</p>
+  <div id="sso-state" aria-live="polite"></div>`, {notabs:true});
+V["app-consent"] = () => phone("app-consent","Uso de tus datos", `
+  <p>Antes de empezar, queremos contarte qué datos usamos y para qué.</p>
+  <div class="app-card"><h3>Qué usamos</h3><ul style="padding-left:1.1rem;margin:.2rem 0"><li>Tus notas y tu asistencia, para detectar a tiempo si necesitas apoyo.</li><li>Tus respuestas del test de orientación, solo si decides compartirlas.</li></ul></div>
+  <div class="app-card"><h3>Qué no usamos</h3><p style="margin:0">Origen, salud ni nivel socioeconómico.</p></div>
+  <div class="app-card"><h3>Tus derechos</h3><p style="margin:0">Puedes revocar este consentimiento cuando quieras desde tu perfil (Ley N.° 29733).</p></div>
+  <label class="check"><input type="checkbox" id="cs-ok"> He leído y acepto el uso de mis datos académicos para recibir alertas y apoyo.</label>
+  <button class="btn block" id="cs-go" disabled style="margin-top:.8rem">Aceptar y continuar</button>
+  <p class="hint">Versión del consentimiento: 1.0 · 2026</p>`, {notabs:true});
+V["app-home"] = () => { if(needConsent()) return ""; const r=risk(ME); const t=APP.test; const done=t.done;
+  return phone("app-home","Hola, Lucía", `
+  ${APP.revocado?'<div class="banner warn" role="status">Revocaste el consentimiento: las alertas y el seguimiento están desactivados.</div>':''}
+  ${!APP.revocado && r.nivel!=="bajo" && !APP.offline ? `<a class="app-card" href="#app-alert" style="display:block;text-decoration:none;color:inherit;border-left:5px solid var(--accent)">
+     <div class="row"><strong>Tenemos una recomendación para ti</strong><span class="spacer"></span>${lvl(r.nivel)}</div>
+     <p style="margin:.4rem 0 0">Notamos que tu asistencia en ${esc(ME.curso)} bajó. Aún estás a tiempo: te ayudamos a retomar el ritmo. <u>Ver qué puedo hacer</u></p></a>`:''}
+  <div class="app-card"><div class="row"><strong>Test de orientación</strong><span class="spacer"></span>${done?'<span class="chip bajo">Completado</span>':`<span class="chip neutral">${Object.keys(t.r).length}/12</span>`}</div>
+   <p class="muted" style="margin:.3rem 0 .6rem">Descubre tu forma de estudiar y recibe consejos personalizados.</p>
+   <a class="btn sec sm" href="#${done?'app-test-result':'app-test'}">${done?'Ver resultado':(Object.keys(t.r).length?'Continuar test':'Empezar test')}</a></div>
+  <div class="app-card"><strong>Próxima cita</strong><p style="margin:.3rem 0 .6rem">${APP.cita?`${esc(APP.cita.dia)} · ${esc(APP.cita.hora)} con Ing. Rosa Quispe <span class="chip medio">Pendiente de confirmación</span>`:'No tienes citas programadas.'}</p><a class="btn sec sm" href="#app-agenda">Agendar tutoría</a></div>
+  <div class="grid g2" style="gap:.6rem">
+    <a class="app-card" href="#app-mentor" style="text-decoration:none;color:inherit;margin:0"><strong>Mentoría</strong><p class="muted" style="margin:.2rem 0 0">Conecta con un estudiante de ciclos avanzados.</p></a>
+    <a class="app-card" href="#app-groups" style="text-decoration:none;color:inherit;margin:0"><strong>Grupos</strong><p class="muted" style="margin:.2rem 0 0">Estudia con compañeros de tu curso.</p></a>
+  </div>`); };
+V["app-alert"] = () => { if(needConsent()) return ""; const r=risk(ME);
+  const recs = []; if(r.f.asist) recs.push(["Conversa con tu tutora","Agenda una tutoría con la Ing. Rosa Quispe para armar un plan.","app-agenda"]);
+  if(r.f.prom) recs.push(["Asiste a una asesoría","Asesorías de Matemática Básica: martes y jueves, 4 p. m.","app-agenda"]);
+  recs.push(["Repasa con material de tus compañeros","Resumen de límites con ejercicios resueltos (4.6 ★).","app-material"]);
+  return phone("app-alert","Tu alerta", `
+  <div class="banner warn"><div><strong>Vamos a tiempo</strong><br>Detectamos algunas señales en tus cursos. Muchos estudiantes pasaron por esto y lo superaron con un poco de apoyo.</div></div>
+  <h2>Lo que notamos</h2>
+  <ul style="padding-left:1.1rem">${r.f.asist?`<li>Tu asistencia está en ${ME.asist} % (lo recomendado es ${RULES.asist} % o más).</li>`:""}${r.f.prom?`<li>Tu promedio parcial en ${esc(ME.curso)} puede mejorar.</li>`:""}${r.f.inact?`<li>No ingresas al aula virtual hace ${ME.inact} días.</li>`:""}${r.f.desap?`<li>Tienes ${ME.desap} evaluaciones por reforzar.</li>`:""}</ul>
+  <h2>Lo que puedes hacer</h2>
+  ${recs.map(x=>`<div class="app-card"><strong>${x[0]}</strong><p class="muted" style="margin:.2rem 0 .5rem">${x[1]}</p><button class="btn sm" onclick="go('${x[2]}')">Ir ahora</button></div>`).join("")}
+  <p class="hint">Recibiste esta alerta el 21/11/2026, 7:02 a. m. Tu tutora también fue informada para apoyarte.</p>`, {back:"app-home"}); };
+const PREG = [
+ ["¿Cuántas horas a la semana estudias fuera de clase?",["Menos de 3","De 3 a 6","De 7 a 10","Más de 10"]],
+ ["¿Tienes un horario fijo para estudiar?",["Nunca","A veces","Casi siempre","Siempre"]],
+ ["¿Dónde estudias con mayor frecuencia?",["En casa, con distracciones","En casa, en un lugar tranquilo","En la biblioteca","En el transporte o el trabajo"]],
+ ["Cuando no entiendes un tema, ¿qué haces primero?",["Lo dejo para después","Busco videos o internet","Pregunto a un compañero","Consulto al docente"]],
+ ["¿Cómo preparas un examen?",["La noche anterior","Dos o tres días antes","Repaso cada semana","Con resúmenes y ejercicios"]],
+ ["¿Cómo te organizas con tus tareas?",["No uso nada","Memoria","Agenda o celular","Planificador semanal"]],
+ ["¿Trabajas además de estudiar?",["No","Menos de 10 h por semana","De 10 a 20 h","Más de 20 h"]],
+ ["¿Te sientes seguro de haber elegido tu carrera?",["Nada seguro","Poco seguro","Bastante seguro","Muy seguro"]],
+ ["¿Conoces los servicios de tutoría de tu universidad?",["No los conozco","Los conozco, no los uso","Los usé una vez","Los uso con frecuencia"]],
+ ["¿Cuánto tiempo pasas en redes sociales mientras estudias?",["Casi todo el tiempo","Bastante","Poco","Nada"]],
+ ["¿Con qué te resulta más fácil aprender?",["Leyendo","Viendo videos o esquemas","Escuchando explicaciones","Haciendo ejercicios"]],
+ ["¿Cuánto descansas antes de un día de clases?",["Menos de 5 h","De 5 a 6 h","De 7 a 8 h","Más de 8 h"]]
+];
+V["app-test"] = () => { if(needConsent()) return ""; const t=APP.test; const i=Math.min(t.i,PREG.length-1); const q=PREG[i]; const pct=Math.round(Object.keys(t.r).length/PREG.length*100);
+  return phone("app-test","Test de orientación", `
+  <div class="row" style="margin-bottom:.3rem"><small>Pregunta ${i+1} de ${PREG.length}</small><span class="spacer"></span><small>${pct} %</small></div>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Avance del test"><span style="width:${pct}%"></span></div>
+  <fieldset style="border:0;padding:0;margin:1rem 0 0"><legend style="font-weight:700;font-size:1.05rem;margin-bottom:.4rem">${esc(q[0])}</legend>
+  ${q[1].map((o,k)=>`<label class="opt"><input type="radio" name="q" value="${k}" ${t.r[i]==k?"checked":""}> ${esc(o)}</label>`).join("")}</fieldset>
+  <div id="q-err" class="err" role="alert"></div>
+  <div class="row" style="margin-top:1rem"><button class="btn sec" id="q-prev" ${i===0?"disabled":""}>Anterior</button><span class="spacer"></span><button class="btn" id="q-next">${i===PREG.length-1?"Ver resultado":"Siguiente"}</button></div>
+  <button class="btn ghost block" id="q-save" style="margin-top:.6rem">Guardar y continuar después</button>
+  <p class="hint">Tus respuestas son confidenciales. Solo tu tutora las verá si tú lo autorizas.</p>`, {back:"app-home"}); };
+V["app-test-result"] = () => { if(needConsent()) return ""; const t=APP.test;
+  if(!t.done) return phone("app-test-result","Resultado del test", `<div class="banner info">Completa el test para ver tu resultado.</div><a class="btn" href="#app-test">Ir al test</a>`, {back:"app-home"});
+  const sc = Object.values(t.r).reduce((a,b)=>a+Number(b),0); const perfil = sc>=24?"Estudiante organizado":sc>=15?"Estudiante en construcción":"Estudiante por organizar";
+  return phone("app-test-result","Tu resultado", `
+  <div class="app-card" style="border-left:5px solid var(--brand)"><small class="muted">Tu perfil de estudio</small><h2 style="margin:.2rem 0">${perfil}</h2><p style="margin:0">Tienes buenas intenciones y algunas rutinas; te falta un horario estable y técnicas para preparar exámenes.</p></div>
+  <h2>Recomendaciones para ti</h2>
+  <div class="app-card"><strong>1. Arma tu horario semanal</strong><p class="muted" style="margin:.2rem 0 0">Bloques de 50 minutos con 10 de descanso, a la misma hora cada día.</p></div>
+  <div class="app-card"><strong>2. Repasa cada semana</strong><p class="muted" style="margin:.2rem 0 0">Un resumen corto por curso cada viernes evita estudiar todo la noche anterior.</p></div>
+  <div class="app-card"><strong>3. Usa la tutoría</strong><p class="muted" style="margin:.2rem 0 .5rem">Tu tutora puede ayudarte a armar el plan.</p><a class="btn sm" href="#app-agenda">Agendar tutoría</a></div>
+  <label class="check"><input type="checkbox" id="share" ${t.share?"checked":""}> Autorizo compartir mis respuestas con mi tutora</label>
+  <p class="hint">Si no lo autorizas, tu tutora solo verá que completaste el test.</p>
+  <button class="btn sec block" id="retest" style="margin-top:.6rem">Volver a hacer el test</button>`, {back:"app-home"}); };
+const SLOTS = [["Lun 24/11","9:00",false],["Lun 24/11","11:00",true],["Mar 25/11","16:00",false],["Mar 25/11","17:00",true],["Jue 27/11","10:00",false],["Jue 27/11","15:00",false]];
+V["app-agenda"] = () => { if(needConsent()) return "";
+  return phone("app-agenda","Agendar tutoría", `
+  <div class="app-card row"><div class="avatar" aria-hidden="true">RQ</div><div><strong>Ing. Rosa Quispe</strong><br><small class="muted">Tu tutora · Ing. de Sistemas</small></div></div>
+  ${APP.cita?`<div class="banner ok" role="status">Solicitud enviada para el ${esc(APP.cita.dia)} a las ${esc(APP.cita.hora)}. Te avisaremos cuando la tutora confirme.</div>`:""}
+  <fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:700">Horarios disponibles</legend>
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.4rem" id="slots">
+  ${SLOTS.map((s,k)=>`<button class="slot" data-k="${k}" aria-pressed="false" ${s[2]?'disabled aria-label="'+s[0]+' '+s[1]+', ocupado"':''}><strong>${s[0]}</strong><br>${s[1]}${s[2]?" · ocupado":""}</button>`).join("")}</div></fieldset>
+  <div id="slot-err" class="err" role="alert"></div>
+  <label for="motivo">Motivo de la cita</label>
+  <textarea id="motivo" maxlength="200" placeholder="Ej.: quiero organizar mi horario de estudio para Matemática Básica"></textarea>
+  <div class="hint"><span id="mot-c">0</span>/200 caracteres · mínimo 10</div>
+  <button class="btn block" id="cita-go" style="margin-top:.8rem" ${APP.cita?"disabled":""}>Solicitar cita</button>
+  <p class="hint">Recibirás un recordatorio 24 horas antes de la cita.</p>`); };
+V["app-mentor"] = () => { if(needConsent()) return ""; const lista = MENTORES.filter(m=>m.verif && m.cupo<5 && m.carrera===ME.carrera).sort((a,b)=>b.afinidad-a.afinidad);
+  return phone("app-mentor","Mentoría", `
+  ${APP.mentorPedido?`<div class="banner ok" role="status"><div><strong>${esc(APP.mentorPedido)}</strong> aceptó tu solicitud. <a href="#app-mentor-chat">Abrir chat</a></div></div>`:`<p>Te sugerimos mentores de <strong>${esc(ME.carrera)}</strong> según tus intereses.</p>`}
+  ${lista.map(m=>`<div class="app-card"><div class="row"><div class="avatar" aria-hidden="true">${m.nombre.split(" ").map(x=>x[0]).join("")}</div><div><strong>${esc(m.nombre)}</strong><br><small class="muted">${m.ciclo}.° ciclo · ${esc(m.intereses)}</small></div><span class="spacer"></span><span class="chip bajo">${m.afinidad} % afinidad</span></div>
+    <div class="row" style="margin-top:.5rem"><small class="muted">Cupos disponibles: ${5-m.cupo} de 5</small><span class="spacer"></span><button class="btn sm ${APP.mentorPedido?'sec':''}" data-mentor="${esc(m.nombre)}" ${APP.mentorPedido?"disabled":""}>Solicitar</button></div></div>`).join("")}
+  <p class="hint">No se muestran mentores con el cupo completo ni sin verificar.</p>`); };
+V["app-mentor-chat"] = () => { if(needConsent()) return "";
+  if(!APP.mentorPedido) return phone("app-mentor-chat","Chat de mentoría", `<div class="banner info">El chat se habilita cuando un mentor acepta tu solicitud.</div><a class="btn" href="#app-mentor">Buscar mentor</a>`, {back:"app-mentor"});
+  return phone("app-mentor-chat", APP.mentorPedido, chatHTML("mentor"), {back:"app-mentor"}); };
+function chatHTML(k){ return `<div class="chat" id="chat" aria-live="polite">${CHATS[k].map(m=>`<div class="bubble ${m.me?"me":"them"}">${m.who&&!m.me?`<small><strong>${esc(m.who)}</strong></small><br>`:""}${esc(m.t)}</div>`).join("")}</div>
+  <form id="chat-f" data-k="${k}" style="margin-top:.8rem" novalidate><label for="msg" class="sr">Mensaje</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="msg" placeholder="Escribe un mensaje" maxlength="500" ${APP.offline?"disabled":""}><button class="btn" ${APP.offline?"disabled":""}>Enviar</button></div></form>`; }
+V["app-repo"] = () => { if(needConsent()) return ""; const q=(APP.q||"").toLowerCase(); const list=MATERIALES.filter(m=>(!APP.offline||m.descargado) && (m.titulo+m.curso).toLowerCase().includes(q));
+  return phone("app-repo","Material de estudio", `
+  <div class="row" style="flex-wrap:nowrap"><label for="rq" class="sr">Buscar material</label><input type="search" id="rq" placeholder="Buscar por título o curso" value="${esc(APP.q||"")}"><a class="btn" href="#app-upload" aria-label="Publicar material" ${APP.offline?'style="pointer-events:none;opacity:.5" aria-disabled="true"':''}>+</a></div>
+  <div class="row" style="margin:.6rem 0"><a href="#app-groups" class="btn sec sm">Grupos de estudio</a></div>
+  ${APP.offline?'<div class="banner info">Sin conexión: solo ves los materiales que descargaste.</div>':""}
+  <div class="app-card" style="padding:.2rem .85rem">${list.length?list.map(m=>`<a class="list-item" href="#app-material" data-mat="${m.id}" style="text-decoration:none;color:inherit"><div class="avatar" aria-hidden="true" style="border-radius:10px;font-size:.75rem">${m.tipo}</div><div style="flex:1"><strong>${esc(m.titulo)}</strong><br><small class="muted">${esc(m.curso)} · ${esc(m.autor)}</small></div><small aria-label="Calificación ${m.rating} de 5">★ ${m.rating}</small></a>`).join(""):'<p class="muted">No se encontraron materiales.</p>'}</div>`); };
+V["app-upload"] = () => { if(needConsent()) return "";
+  return phone("app-upload","Publicar material", `
+  <form id="up-f" novalidate>
+  <label for="up-curso">Curso</label><select id="up-curso"><option value="">Selecciona un curso</option>${CURSOS.map(c=>`<option>${c}</option>`).join("")}</select>
+  <label for="up-tit">Título</label><input type="text" id="up-tit" maxlength="80" placeholder="Ej.: Resumen de la unidad 2">
+  <div class="hint">De 5 a 80 caracteres.</div>
+  <label for="up-file">Archivo</label><input type="file" id="up-file" accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg">
+  <div class="hint">PDF, DOCX, PPTX, PNG o JPG · máximo 20 MB. Se analiza con antivirus antes de publicarse.</div>
+  <p class="hint" style="margin-top:.6rem">¿Sin archivo a mano? Simula: <button type="button" class="btn ghost sm" id="up-ok">archivo válido</button><button type="button" class="btn ghost sm" id="up-bad">archivo con virus</button></p>
+  <div id="up-state" aria-live="polite"></div>
+  <button class="btn block" style="margin-top:.6rem">Publicar</button></form>`, {back:"app-repo"}); };
+V["app-material"] = () => { if(needConsent()) return ""; const m=MATERIALES.find(x=>x.id===(APP.mat||1));
+  return phone("app-material","Material", `
+  <div class="app-card"><span class="chip neutral">${esc(m.curso)}</span><h2 style="margin:.5rem 0 .2rem">${esc(m.titulo)}</h2><small class="muted">Publicado por ${esc(m.autor)} · ${m.tipo} · ${m.tam}</small>
+  <div class="row" style="margin-top:.6rem"><button class="btn sm" id="dl">${m.descargado?"Abrir":"Descargar"}</button><span class="spacer"></span><strong aria-label="Promedio ${m.rating} de 5">★ ${m.rating}</strong><small class="muted">(${m.votos})</small></div></div>
+  <div class="app-card"><h3>Califica este material</h3><div class="stars" role="radiogroup" aria-label="Calificación">${[1,2,3,4,5].map(k=>`<button role="radio" aria-checked="${m.mio===k}" aria-label="${k} estrellas" data-star="${k}" class="${m.mio>=k?"on":""}" ${m.mio?"disabled":""}>★</button>`).join("")}</div>
+  ${m.mio?'<p class="hint">Ya calificaste este material.</p>':''}
+  <label for="com">Comentario (opcional)</label><textarea id="com" maxlength="300" placeholder="¿Te sirvió?"></textarea><button class="btn sec sm" id="com-go" style="margin-top:.4rem">Comentar</button></div>
+  <div class="app-card"><h3>Comentarios</h3>${m.comentarios.length?m.comentarios.map(c=>`<p style="border-bottom:1px solid var(--line);padding-bottom:.4rem">${esc(c)}</p>`).join(""):'<p class="muted">Aún no hay comentarios.</p>'}</div>
+  <button class="btn ghost block" id="rep">Reportar este material</button>`, {back:"app-repo"}); };
+V["app-groups"] = () => { if(needConsent()) return "";
+  return phone("app-groups","Grupos de estudio", `
+  <button class="btn block" id="g-new">Crear grupo</button>
+  <div class="app-card" style="padding:.2rem .85rem;margin-top:.8rem">${GRUPOS.map(g=>`<div class="list-item"><div class="avatar" aria-hidden="true">${g.miembros}</div><div style="flex:1"><strong>${esc(g.nombre)}</strong><br><small class="muted">${esc(g.curso)} · ${g.miembros}/15 miembros</small></div>${g.unido?`<a class="btn sm" href="#app-group-chat" data-grp="${g.id}">Abrir</a>`:`<button class="btn sec sm" data-join="${g.id}">Unirme</button>`}</div>`).join("")}</div>`, {back:"app-repo"}); };
+V["app-group-chat"] = () => { if(needConsent()) return ""; const g=GRUPOS.find(x=>x.id===(APP.grp||1));
+  return phone("app-group-chat", g.nombre, `<p class="hint">${g.miembros} miembros · solo los miembros ven estos mensajes</p>${chatHTML("grupo")}`, {back:"app-groups"}); };
+V["app-profile"] = () => {
+  return phone("app-profile","Mi perfil", `
+  <div class="app-card row"><div class="avatar" aria-hidden="true">LR</div><div><strong>${esc(ME.nombre)}</strong><br><small class="muted">${ME.cod} · ${esc(ME.carrera)} · ${ME.ciclo}.° ciclo</small></div></div>
+  <div class="app-card"><h3>Accesibilidad</h3>
+   <label class="check"><input type="checkbox" id="p-lg" ${document.documentElement.classList.contains("lg")?"checked":""}> Texto más grande</label>
+   <label class="check"><input type="checkbox" id="p-hc" ${document.body.classList.contains("hc")?"checked":""}> Alto contraste</label>
+   <label class="check"><input type="checkbox" id="p-off" ${APP.offline?"checked":""}> Simular modo sin conexión</label></div>
+  <div class="app-card"><h3>Privacidad</h3>
+   <p style="margin:.2rem 0">Consentimiento: ${APP.revocado?'<span class="chip alto">Revocado</span>':APP.consent?'<span class="chip bajo">Aceptado · versión 1.0</span>':'<span class="chip neutral">Pendiente</span>'}</p>
+   ${APP.consent && !APP.revocado?'<button class="btn danger sm" id="revoke" style="margin-top:.4rem">Revocar consentimiento</button>':''}
+   ${APP.revocado?'<button class="btn sm" id="reaccept" style="margin-top:.4rem">Volver a aceptar</button>':''}</div>
+  <button class="btn sec block" id="logout">Cerrar sesión</button>`); };
+
+/* ====================== plataforma web ====================== */
+const MENU = {
+  tutor:[["web-dashboard","Mis tutorados"],["web-avisos","Avisos de riesgo"],["web-tutoria","Registrar tutoría"]],
+  coord:[["web-dashboard","Tutorados (vista general)"],["web-avisos","Avisos escalados"],["web-reglas","Reglas del semáforo"],["web-mentores","Mentores"],["web-moderacion","Moderación"],["web-reportes","Reportes"]],
+  ti:[["web-import","Importar datos"],["web-monitoreo","Rendimiento"],["web-auditoria","Auditoría"]]
+};
+const ROLE = {tutor:{n:"Ing. Rosa Quispe",r:"Tutora",i:"RQ"}, coord:{n:"Lic. Martha Ccahuana",r:"Coordinación de Bienestar",i:"MC"}, ti:{n:"Jorge Pariona",r:"Responsable de TI",i:"JP"}};
+const ACCESS = {"web-dashboard":["tutor","coord"],"web-student":["tutor","coord"],"web-tutoria":["tutor"],"web-avisos":["tutor","coord"],"web-import":["ti"],"web-reglas":["coord"],"web-mentores":["coord"],"web-moderacion":["coord"],"web-reportes":["coord"],"web-monitoreo":["ti"],"web-auditoria":["ti","coord"]};
+function web(id, title, inner, actions=""){
+  const r=ROLE[WEB.role];
+  return `<div class="web">
+   <nav class="side" aria-label="Menú de la plataforma">
+     <div class="who row"><div class="avatar" aria-hidden="true">${r.i}</div><div><strong>${esc(r.n)}</strong><br><small class="muted">${esc(r.r)}</small></div></div>
+     ${MENU[WEB.role].map(([h,l])=>`<a href="#${h}" ${id===h||(id==="web-student"&&h==="web-dashboard")?'aria-current="page"':''}>${esc(l)}</a>`).join("")}
+     <div class="sec-title">Prototipo</div><a href="#web-login">Cambiar de rol</a>
+   </nav>
+   <section aria-labelledby="pg-t"><div class="pagehead"><h1 id="pg-t">${esc(title)}</h1>${huChips(id)}<span class="spacer"></span>${actions}</div>${inner}</section></div>
+   <button class="btn sec ficha-btn" onclick="openFicha('${id}')">Ficha ${SCREENS[id].n}</button>`;
+}
+function openFicha(id){ const l=$("#layer"); const d=document.createElement("div"); d.className="modal-bg"; d.style.justifyContent="flex-end"; d.style.padding="0";
+  d.innerHTML=`<aside class="ficha-drawer ficha" role="dialog" aria-modal="true" aria-label="Ficha de la interfaz">${fichaHTML(id)}<button class="btn sec" id="fd-x">Cerrar</button></aside>`;
+  d.onclick=e=>{ if(e.target===d||e.target.id==="fd-x") d.remove(); }; d.onkeydown=e=>{ if(e.key==="Escape") d.remove(); };
+  l.appendChild(d); $("#fd-x",d).focus(); }
+function guard(id){ if(!WEB.role){ go("web-login"); return false; } if(ACCESS[id] && !ACCESS[id].includes(WEB.role)){ WEB.denied={id, t:SCREENS[id].t}; AUDIT.unshift({f:"2026-11-21 "+new Date().toTimeString().slice(0,5), u:WEB.role+"@ejemplo.edu", a:"Abrir "+SCREENS[id].t, r:id, res:"Denegado"}); go("web-denegado"); return false; } return true; }
+V["web-login"] = () => `<div class="grid g2" style="align-items:start">
+  <div class="card" style="max-width:520px">
+   <h1>Plataforma web RUMBO_UC</h1><p class="muted">Panel analítico para tutores, Coordinación de Bienestar y TI.</p>
+   <div class="banner info">En la versión final, el rol se obtiene de la cuenta institucional (SSO). En este prototipo puedes elegirlo para recorrer las pantallas.</div>
+   <div class="grid" style="gap:.6rem">
+    <button class="btn" data-role="tutor">Ingresar como tutora</button>
+    <button class="btn sec" data-role="coord">Ingresar como Coordinación de Bienestar</button>
+    <button class="btn sec" data-role="ti">Ingresar como responsable de TI</button>
+   </div>
+   <p class="hint" style="margin-top:.8rem">No se solicitan contraseñas: el acceso real usa el inicio de sesión institucional.</p>
+  </div>
+  <aside class="card ficha" aria-label="Ficha de la interfaz">${fichaHTML("web-login")}</aside></div>`;
+function trendSVG(h, w=90, hgt=26){ const max=100; const pts=h.map((v,i)=>`${(i/(h.length-1))*w},${hgt-(v/max)*hgt}`).join(" "); const up=h[h.length-1]>h[0];
+  return `<svg width="${w}" height="${hgt}" viewBox="0 0 ${w} ${hgt}" role="img" aria-label="Tendencia del puntaje de riesgo: ${h.join(", ")}${up?", en aumento":", estable o en baja"}"><polyline points="${pts}" fill="none" stroke="${up?"#b3261e":"#1e7a3a"}" stroke-width="2.2"/></svg>`; }
+V["web-dashboard"] = () => { if(!guard("web-dashboard")) return ""; const F=WEB.filtro; const t0=performance.now();
+  const all = STUDENTS.map(s=>Object.assign({}, s, risk(s))); const ord={alto:0,medio:1,bajo:2};
+  const list = all.filter(s=>(!F.nivel||s.nivel===F.nivel)&&(!F.curso||s.curso===F.curso)&&(!F.carrera||s.carrera===F.carrera)&&(!F.q||(s.nombre+s.cod).toLowerCase().includes(F.q.toLowerCase()))).sort((a,b)=>ord[a.nivel]-ord[b.nivel]||b.score-a.score);
+  const c = n => all.filter(s=>s.nivel===n).length; const ms=Math.max(1,Math.round(performance.now()-t0));
+  return web("web-dashboard", WEB.role==="coord"?"Tutorados (vista general)":"Mis tutorados", `
+  <div class="grid g4" style="margin-bottom:1rem">
+   <div class="card kpi"><small class="muted">Tutorados</small><b>${all.length}</b></div>
+   <div class="card kpi"><small class="muted">Riesgo alto</small><b style="color:var(--bad)">${c("alto")}</b></div>
+   <div class="card kpi"><small class="muted">Riesgo medio</small><b style="color:var(--warn)">${c("medio")}</b></div>
+   <div class="card kpi"><small class="muted">Contactados en 72 h</small><b>83 %</b><small class="muted">Meta: 80 %</small></div>
+  </div>
+  <div class="card">
+   <form class="filters" id="flt" role="search" aria-label="Filtros de tutorados" onsubmit="return false">
+    <div><label for="f-q">Buscar</label><input type="search" id="f-q" placeholder="Nombre o código" value="${esc(F.q)}"></div>
+    <div><label for="f-n">Nivel</label><select id="f-n"><option value="">Todos</option>${["alto","medio","bajo"].map(n=>`<option value="${n}" ${F.nivel===n?"selected":""}>${NIVEL_TXT[n]}</option>`).join("")}</select></div>
+    <div><label for="f-c">Curso</label><select id="f-c"><option value="">Todos</option>${CURSOS.map(x=>`<option ${F.curso===x?"selected":""}>${x}</option>`).join("")}</select></div>
+    <div><label for="f-k">Carrera</label><select id="f-k"><option value="">Todas</option>${CARRERAS.map(x=>`<option ${F.carrera===x?"selected":""}>${x}</option>`).join("")}</select></div>
+   </form>
+   <p class="hint" aria-live="polite">${list.length} resultado(s) · filtrado en ${ms} ms · ordenado por nivel de riesgo</p>
+   <div style="overflow:auto"><table><caption class="sr">Tutorados ordenados por riesgo</caption><thead><tr><th>Estudiante</th><th>Carrera</th><th>Curso crítico</th><th>Nivel</th><th>Tendencia</th><th>Asistencia</th><th>Promedio</th></tr></thead><tbody>
+   ${list.map(s=>`<tr class="clickable" tabindex="0" data-st="${s.id}"><td><strong>${esc(s.nombre)}</strong><br><small class="muted">${s.cod}</small></td><td>${esc(s.carrera)}</td><td>${esc(s.curso)}</td><td>${lvl(s.nivel)}</td><td>${trendSVG(s.hist.concat(s.score))}</td><td>${s.asist} %</td><td>${s.prom.toFixed(1)}</td></tr>`).join("")}
+   </tbody></table></div>
+   <p class="hint" style="margin-top:.6rem">Prueba de permisos (HU17): <button class="btn ghost sm" id="otro">abrir un estudiante de otro tutor</button></p>
+  </div>`); };
+V["web-student"] = () => { if(!guard("web-student")) return ""; const s = STUDENTS.find(x=>x.id===WEB.st) || STUDENTS[0]; const r=risk(s);
+  const fac = [["Asistencia",`${s.asist} %`,`Umbral: ${RULES.asist} %`,r.f.asist,RULES.w.asist],["Promedio parcial",s.prom.toFixed(1),`Umbral: ${RULES.prom}`,r.f.prom,RULES.w.prom],["Evaluaciones desaprobadas",s.desap,`Umbral: ${RULES.desap}`,r.f.desap,RULES.w.desap],["Días sin ingresar al aula virtual",s.inact,`Umbral: ${RULES.inact}`,r.f.inact,RULES.w.inact]];
+  const tut = TUTORIAS.filter(t=>t.est===s.id);
+  return web("web-student", s.nombre, `
+  <div class="grid g2">
+   <div class="card"><div class="row"><div class="avatar" aria-hidden="true">${s.nombre.split(" ").map(x=>x[0]).join("")}</div><div><strong>${esc(s.nombre)}</strong><br><small class="muted">${s.cod} · ${esc(s.carrera)} · ${s.ciclo}.° ciclo</small></div><span class="spacer"></span>${lvl(r.nivel)}</div>
+    <p style="margin-top:.8rem"><strong>Puntaje de riesgo:</strong> ${r.score} / 100</p>
+    <div class="row"><span>Tendencia en las últimas cargas:</span>${trendSVG(s.hist.concat(r.score),140,36)}</div>
+    <div class="row" style="margin-top:.8rem"><button class="btn" onclick="WEB.pre=${s.id};go('web-tutoria')">Registrar tutoría</button><button class="btn sec" id="contact">Registrar contacto</button></div></div>
+   <div class="card"><h2>Factores que explican el nivel</h2>
+    <table><thead><tr><th>Factor</th><th>Valor</th><th>Estado</th><th>Peso</th></tr></thead><tbody>
+    ${fac.map(f=>`<tr><td>${f[0]}<br><small class="muted">${f[2]}</small></td><td>${f[1]}</td><td>${f[3]?'<span class="chip alto">Fuera del umbral</span>':'<span class="chip bajo">Dentro</span>'}</td><td>${f[4]} %</td></tr>`).join("")}</tbody></table>
+    <p class="hint">Reglas vigentes configuradas por Coordinación de Bienestar.</p></div>
+  </div>
+  <div class="card" style="margin-top:1rem"><h2>Historial de tutorías</h2>${tut.length?`<table><thead><tr><th>Fecha</th><th>Modalidad</th><th>Acuerdos</th><th>Seguimiento</th></tr></thead><tbody>${tut.map(t=>`<tr><td>${t.fecha}</td><td>${esc(t.modalidad)}</td><td>${esc(t.acuerdos)}</td><td>${t.seg||"—"}</td></tr>`).join("")}</tbody></table>`:'<p class="muted">Sin tutorías registradas.</p>'}
+   <p class="hint">Test de orientación: completado · respuestas no compartidas por el estudiante.</p></div>`, `<a class="btn sec sm" href="#web-dashboard">← Volver</a>`); };
+V["web-tutoria"] = () => { if(!guard("web-tutoria")) return ""; const today="2026-11-21";
+  return web("web-tutoria","Registrar tutoría", `
+  <form class="card" id="tu-f" novalidate style="max-width:760px">
+   <div class="grid g2" style="gap:0 1rem">
+    <div><label for="tu-e">Estudiante</label><select id="tu-e"><option value="">Selecciona un tutorado</option>${STUDENTS.map(s=>`<option value="${s.id}" ${WEB.pre===s.id?"selected":""}>${esc(s.nombre)} – ${s.cod}</option>`).join("")}</select></div>
+    <div><label for="tu-m">Modalidad</label><select id="tu-m"><option>Presencial</option><option>Virtual</option></select></div>
+    <div><label for="tu-d">Fecha de la sesión</label><input type="date" id="tu-d" max="${today}" value="${today}"></div>
+    <div><label for="tu-s">Fecha de seguimiento</label><input type="date" id="tu-s"></div>
+   </div>
+   <label for="tu-a">Acuerdos y plan de acción</label><textarea id="tu-a" maxlength="1000" placeholder="Ej.: asistirá a la asesoría de Matemática Básica los martes; armará un horario semanal de estudio."></textarea>
+   <div class="hint"><span id="tu-c">0</span>/1000 caracteres · mínimo 20</div>
+   <label class="check" style="margin-top:.6rem"><input type="checkbox" id="tu-r" checked> Programar recordatorio en la fecha de seguimiento</label>
+   <div class="row" style="margin-top:1rem"><button class="btn">Guardar tutoría</button><a class="btn sec" href="#web-dashboard">Cancelar</a></div>
+   <p class="hint">Registro confidencial: solo lo ven la tutora asignada y Coordinación de Bienestar.</p>
+  </form>`); };
+const AVISOS = [{st:1,h:6,canal:"Panel y correo"},{st:2,h:51,canal:"Panel y correo"},{st:3,h:75,canal:"Panel y correo"}];
+V["web-avisos"] = () => { if(!guard("web-avisos")) return ""; const coord=WEB.role==="coord";
+  const rows = AVISOS.filter(a=>!coord||a.h>=72);
+  return web("web-avisos", coord?"Avisos escalados":"Avisos de riesgo alto", `
+  ${coord?'<div class="banner warn">Estos avisos se escalaron porque pasaron 72 horas sin que la tutora registrara contacto.</div>':'<div class="banner info">Contacta a cada estudiante antes de 72 horas. Pasado ese plazo, el aviso se escala a Coordinación de Bienestar.</div>'}
+  <div class="card"><table><thead><tr><th>Estudiante</th><th>Nivel</th><th>Tiempo desde el aviso</th><th>Estado</th><th></th></tr></thead><tbody>
+  ${rows.map(a=>{ const s=STUDENTS.find(x=>x.id===a.st); const done=a.done; const pct=Math.min(100,Math.round(a.h/72*100));
+    return `<tr><td><strong>${esc(s.nombre)}</strong><br><small class="muted">${s.cod}</small></td><td>${lvl("alto")}</td>
+    <td>${a.h} h<div class="bar" style="margin-top:.3rem" aria-hidden="true"><span style="width:${pct}%;background:${a.h>=72?"var(--bad)":a.h>=48?"#d68a00":"var(--ok)"}"></span></div></td>
+    <td>${done?'<span class="chip bajo">Atendido</span>':a.h>=72?'<span class="chip alto">Escalado</span>':'<span class="chip medio">Pendiente</span>'}</td>
+    <td>${done?"":`<button class="btn sm" data-aviso="${a.st}">Registrar contacto</button>`}</td></tr>`; }).join("")}
+  </tbody></table><p class="hint">Si varios tutorados pasan a riesgo alto el mismo día, la tutora recibe un solo correo resumen.</p></div>`); };
+V["web-import"] = () => { if(!guard("web-import")) return "";
+  return web("web-import","Importar datos académicos", `
+  <div class="grid g2">
+   <div class="card"><h2>Nueva carga</h2>
+    <p class="muted">Archivo CSV con las columnas: <code>codigo, curso, periodo, evaluacion, nota, asistencia</code></p>
+    <label for="imp-f">Archivo CSV</label><input type="file" id="imp-f" accept=".csv">
+    <div class="hint">Máximo 10 MB. Nota de 0 a 20 y asistencia de 0 a 100.</div>
+    <p class="hint" style="margin-top:.6rem">Simular: <button class="btn ghost sm" id="imp-ok">archivo válido</button><button class="btn ghost sm" id="imp-bad">archivo con errores</button></p>
+    <div id="imp-res" aria-live="polite"></div></div>
+   <div class="card"><h2>Historial de cargas</h2><table><thead><tr><th>Fecha</th><th>Archivo</th><th>Procesados</th><th>Rechazados</th></tr></thead><tbody>
+    ${CARGAS.map(c=>`<tr><td>${c.f}<br><small class="muted">${esc(c.u)}</small></td><td>${esc(c.a)}</td><td>${c.p}</td><td>${c.x}</td></tr>`).join("")}</tbody></table></div>
+  </div>`); };
+function parseCSV(txt, name){
+  const lines = txt.trim().split(/\r?\n/); const head = lines[0].split(",").map(x=>x.trim().toLowerCase());
+  const need = ["codigo","curso","periodo","evaluacion","nota","asistencia"]; const falt = need.filter(n=>!head.includes(n));
+  if(falt.length) return {ok:false, msg:`Faltan columnas obligatorias: ${falt.join(", ")}. La carga se rechazó y no se modificaron los datos.`};
+  const errs=[]; let p=0; const seen=new Set();
+  lines.slice(1).forEach((l,k)=>{ const c=l.split(","); const o={}; head.forEach((h,i)=>o[h]=(c[i]||"").trim());
+    const n=Number(o.nota), a=Number(o.asistencia); const key=o.codigo+o.curso+o.evaluacion;
+    if(!/^U\d{9}$/.test(o.codigo)) errs.push([k+2,"Código con formato inválido"]);
+    else if(isNaN(n)||n<0||n>20) errs.push([k+2,"Nota fuera del rango 0–20"]);
+    else if(isNaN(a)||a<0||a>100) errs.push([k+2,"Asistencia fuera del rango 0–100"]);
+    else if(seen.has(key)) errs.push([k+2,"Registro duplicado"]);
+    else { seen.add(key); p++; } });
+  return {ok:true, p, errs, name};
+}
+V["web-reglas"] = () => { if(!guard("web-reglas")) return ""; const R=RULES;
+  return web("web-reglas","Reglas del semáforo de riesgo", `
+  <form class="card" id="rg-f" novalidate style="max-width:820px">
+   <p class="muted">El puntaje suma el peso de cada factor que queda fuera de su umbral. Riesgo alto: 60 o más · medio: de 30 a 59 · bajo: menos de 30.</p>
+   <table><thead><tr><th>Factor</th><th>Umbral</th><th>Peso (%)</th></tr></thead><tbody>
+    <tr><td>Asistencia menor a (%)</td><td><input type="number" id="r-a" min="50" max="100" value="${R.asist}" aria-label="Umbral de asistencia"></td><td><input type="number" id="w-a" min="0" max="100" value="${R.w.asist}" aria-label="Peso de asistencia"></td></tr>
+    <tr><td>Promedio menor a</td><td><input type="number" id="r-p" min="5" max="20" step="0.5" value="${R.prom}" aria-label="Umbral de promedio"></td><td><input type="number" id="w-p" min="0" max="100" value="${R.w.prom}" aria-label="Peso de promedio"></td></tr>
+    <tr><td>Evaluaciones desaprobadas desde</td><td><input type="number" id="r-d" min="1" max="10" value="${R.desap}" aria-label="Umbral de desaprobadas"></td><td><input type="number" id="w-d" min="0" max="100" value="${R.w.desap}" aria-label="Peso de desaprobadas"></td></tr>
+    <tr><td>Días sin ingresar desde</td><td><input type="number" id="r-i" min="1" max="60" value="${R.inact}" aria-label="Umbral de inactividad"></td><td><input type="number" id="w-i" min="0" max="100" value="${R.w.inact}" aria-label="Peso de inactividad"></td></tr>
+   </tbody></table>
+   <p id="w-sum" class="hint" aria-live="polite"></p><div id="rg-err" class="err" role="alert"></div>
+   <div class="row" style="margin-top:.8rem"><button class="btn">Guardar y recalcular</button><button type="button" class="btn sec" id="rg-reset">Restablecer valores</button></div>
+   <p class="hint">El cambio queda registrado en la auditoría. En la versión final, el recálculo se ejecuta en menos de 24 horas.</p>
+  </form>`); };
+V["web-mentores"] = () => { if(!guard("web-mentores")) return "";
+  return web("web-mentores","Gestión de mentores", `
+  <div class="card"><table><thead><tr><th>Mentor</th><th>Carrera y ciclo</th><th>Estado</th><th>Mentorados</th><th>Horas</th><th>Constancia</th></tr></thead><tbody>
+  ${MENTORES.map(m=>`<tr><td><strong>${esc(m.nombre)}</strong><br><small class="muted">${esc(m.intereses)}</small></td><td>${esc(m.carrera)} · ${m.ciclo}.°</td>
+   <td>${m.verif?'<span class="chip bajo">Verificado</span>':`<span class="chip medio">Por verificar</span> <button class="btn sm" data-verif="${m.id}">Verificar</button>`}</td>
+   <td>${m.cupo}/5</td><td><div class="row" style="flex-wrap:nowrap"><span>${m.horas} h</span><div class="bar" style="width:70px" aria-hidden="true"><span style="width:${Math.min(100,m.horas/20*100)}%;background:var(--brand)"></span></div></div></td>
+   <td><button class="btn sec sm" data-cert="${m.id}" ${m.horas<20?'disabled title="Requiere 20 horas"':''}>Generar PDF</button></td></tr>`).join("")}
+  </tbody></table><p class="hint">La constancia se habilita al cumplir 20 horas de mentoría.</p></div>`); };
+V["web-moderacion"] = () => { if(!guard("web-moderacion")) return "";
+  return web("web-moderacion","Moderación de materiales", `
+  <div class="card">${REPORTES.length?`<table><thead><tr><th>Material</th><th>Motivo del reporte</th><th>Reportado por</th><th>Acción</th></tr></thead><tbody>
+  ${REPORTES.map(r=>`<tr><td><strong>${esc(r.material)}</strong><br><small class="muted">${r.fecha}</small></td><td>${esc(r.motivo)}</td><td>${esc(r.por)}</td><td class="row"><button class="btn sec sm" data-keep="${r.id}">Mantener</button><button class="btn danger sm" data-del="${r.id}">Retirar</button></td></tr>`).join("")}</tbody></table>`:'<p class="muted">No hay reportes pendientes.</p>'}</div>`); };
+V["web-reportes"] = () => { if(!guard("web-reportes")) return ""; const all=STUDENTS.map(s=>risk(s).nivel); const n=k=>all.filter(x=>x===k).length;
+  const bars=[["Alto",n("alto"),"var(--bad)"],["Medio",n("medio"),"#d68a00"],["Bajo",n("bajo"),"var(--ok)"]]; const mx=Math.max(...bars.map(b=>b[1]));
+  return web("web-reportes","Reportes institucionales", `
+  <form class="filters card" id="rep-f" onsubmit="return false" aria-label="Filtros del reporte">
+   <div><label for="rp-c">Carrera</label><select id="rp-c"><option value="">Selecciona</option>${CARRERAS.map(c=>`<option>${c}</option>`).join("")}</select></div>
+   <div><label for="rp-k">Ciclo</label><select id="rp-k"><option value="">Selecciona</option><option>1</option><option>2</option></select></div>
+   <div><label for="rp-p">Periodo</label><select id="rp-p"><option>2026-2</option><option>2026-1</option></select></div>
+   <div style="align-self:end"><div class="row"><button class="btn sm" data-exp="Excel">Exportar Excel</button><button class="btn sec sm" data-exp="PDF">Exportar PDF</button></div></div>
+  </form>
+  <div class="grid g3" style="margin:1rem 0"><div class="card kpi"><small class="muted">Retención al cierre de ciclo</small><b>91.2 %</b><small class="muted">Cohorte anterior: 86.5 %</small></div>
+   <div class="card kpi"><small class="muted">Retención con tutoría</small><b style="color:var(--ok)">95.4 %</b></div><div class="card kpi"><small class="muted">Retención sin tutoría</small><b style="color:var(--warn)">84.1 %</b></div></div>
+  <div class="grid g2"><div class="card"><h2>Distribución de riesgo</h2>
+   <svg viewBox="0 0 320 170" width="100%" role="img" aria-label="Distribución de riesgo: alto ${bars[0][1]}, medio ${bars[1][1]}, bajo ${bars[2][1]} estudiantes">
+   ${bars.map((b,i)=>{ const h=Math.round(b[1]/mx*110); return `<rect x="${30+i*100}" y="${130-h}" width="60" height="${h}" rx="6" fill="${b[2]}"/><text x="${60+i*100}" y="${124-h}" text-anchor="middle" font-size="14" font-weight="700" fill="#14212b">${b[1]}</text><text x="${60+i*100}" y="152" text-anchor="middle" font-size="13" fill="#41525f">${b[0]}</text>`; }).join("")}
+   <line x1="20" y1="130" x2="310" y2="130" stroke="#d8e0e6"/></svg></div>
+   <div class="card"><h2>Efectividad de las intervenciones</h2><table><thead><tr><th>Intervención</th><th>Estudiantes</th><th>Retención</th></tr></thead><tbody>
+   <tr><td>Tutoría individual</td><td>58</td><td>95.4 %</td></tr><tr><td>Mentoría</td><td>34</td><td>93.8 %</td></tr><tr><td>Grupo de estudio</td><td>71</td><td>92.1 %</td></tr><tr><td>Sin intervención</td><td>137</td><td>84.1 %</td></tr></tbody></table>
+   <p class="hint">Valores ilustrativos del prototipo; en la versión final provienen de los datos importados.</p></div></div>`); };
+V["web-monitoreo"] = () => { if(!guard("web-monitoreo")) return "";
+  const p95=[1.4,1.6,1.3,2.1,2.8,1.9,1.5]; const dias=["15/11","16/11","17/11","18/11","19/11","20/11","21/11"];
+  const pts=p95.map((v,i)=>`${40+i*45},${150-v/4*130}`).join(" ");
+  return web("web-monitoreo","Rendimiento y disponibilidad", `
+  <div class="grid g4" style="margin-bottom:1rem">
+   <div class="card kpi"><small class="muted">Disponibilidad (30 días)</small><b style="color:var(--ok)">99.82 %</b><small class="muted">Meta: ≥ 99.5 %</small></div>
+   <div class="card kpi"><small class="muted">Tiempo de respuesta p95</small><b>1.5 s</b><small class="muted">Meta: &lt; 3 s</small></div>
+   <div class="card kpi"><small class="muted">Tasa de errores</small><b>0.3 %</b><small class="muted">Meta: &lt; 1 %</small></div>
+   <div class="card kpi"><small class="muted">Usuarios concurrentes (pico)</small><b>184</b><small class="muted">Capacidad probada: 200</small></div>
+  </div>
+  <div class="grid g2"><div class="card"><h2>Tiempo de respuesta p95 del dashboard</h2>
+   <svg viewBox="0 0 340 180" width="100%" role="img" aria-label="Tiempo de respuesta p95 de los últimos 7 días: ${p95.join(", ")} segundos; todos bajo la meta de 3 segundos">
+    <line x1="30" y1="${150-3/4*130}" x2="330" y2="${150-3/4*130}" stroke="#b3261e" stroke-dasharray="5 4"/><text x="300" y="${144-3/4*130}" font-size="11" fill="#b3261e">Meta 3 s</text>
+    <polyline points="${pts}" fill="none" stroke="#0b5563" stroke-width="2.5"/>${p95.map((v,i)=>`<circle cx="${40+i*45}" cy="${150-v/4*130}" r="3.5" fill="#0b5563"/><text x="${40+i*45}" y="170" font-size="10" text-anchor="middle" fill="#41525f">${dias[i]}</text>`).join("")}
+    <line x1="30" y1="150" x2="330" y2="150" stroke="#d8e0e6"/></svg></div>
+   <div class="card"><h2>Servicios</h2><table><thead><tr><th>Servicio</th><th>Estado</th><th>Último chequeo</th></tr></thead><tbody>
+    <tr><td>API REST</td><td><span class="chip bajo">Operativo</span></td><td>hace 1 min</td></tr><tr><td>Worker de riesgo y alertas</td><td><span class="chip bajo">Operativo</span></td><td>hace 1 min</td></tr>
+    <tr><td>Base de datos</td><td><span class="chip bajo">Operativo</span></td><td>hace 1 min</td></tr><tr><td>Notificaciones push</td><td><span class="chip medio">Lento</span></td><td>hace 2 min</td></tr>
+    <tr><td>Respaldo diario</td><td><span class="chip bajo">Completado 02:00</span></td><td>hoy</td></tr></tbody></table>
+    <p class="hint">Valores simulados del prototipo. En producción provienen de Prometheus, Grafana y Sentry.</p></div></div>`); };
+V["web-auditoria"] = () => { if(!guard("web-auditoria")) return ""; const f=WEB.af||"";
+  return web("web-auditoria","Auditoría de accesos", `
+  <div class="card"><div class="row" style="margin-bottom:.6rem"><label for="au-f" style="margin:0">Resultado</label><select id="au-f" style="max-width:200px"><option value="">Todos</option><option ${f==="Permitido"?"selected":""}>Permitido</option><option ${f==="Denegado"?"selected":""}>Denegado</option></select></div>
+  <table><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Recurso</th><th>Resultado</th></tr></thead><tbody>
+  ${AUDIT.filter(a=>!f||a.res===f).map(a=>`<tr><td>${a.f}</td><td>${esc(a.u)}</td><td>${esc(a.a)}</td><td>${esc(a.r)}</td><td>${a.res==="Denegado"?'<span class="chip alto">Denegado</span>':'<span class="chip bajo">Permitido</span>'}</td></tr>`).join("")}
+  </tbody></table><p class="hint">Registro de solo lectura: no se puede editar ni borrar.</p></div>`); };
+V["web-denegado"] = () => { if(!WEB.role){ go("web-login"); return ""; } const d=WEB.denied||{t:"el recurso solicitado"};
+  return web("web-denegado","Acceso denegado", `
+  <div class="card" style="max-width:640px;text-align:center;padding:2rem">
+   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#b3261e" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+   <h2 style="margin-top:.6rem">No tienes permiso para ver este contenido</h2>
+   <p class="muted">Tu rol no tiene acceso a «${esc(d.t)}». El intento quedó registrado en la auditoría.</p>
+   <a class="btn" href="#${MENU[WEB.role][0][0]}">Volver a mi inicio</a></div>`); };
+
+/* ====================== inicio y mapa ====================== */
+V["inicio"] = () => `
+ <section class="hero"><h1>RUMBO_UC · Prototipo navegable</h1>
+  <p>Plataforma web analítica para tutores y app móvil para estudiantes de primeros ciclos: alertas tempranas de riesgo académico, tutoría, mentoría y comunidad de estudio. Este prototipo muestra las 28 interfaces que cubren las 18 historias de usuario del proyecto.</p></section>
+ <div class="grid g2">
+  <div class="card entry"><h2>App del estudiante</h2><p class="muted">Ingreso institucional, consentimiento, alerta temprana, test de orientación, agenda de tutorías, mentoría, repositorio, grupos de estudio y perfil.</p>
+   <div class="flow" aria-label="Flujo principal"><a href="#app-login">Ingreso</a><span>→</span><a href="#app-consent">Consentimiento</a><span>→</span><a href="#app-home">Inicio</a><span>→</span><a href="#app-alert">Alerta</a><span>→</span><a href="#app-agenda">Tutoría</a></div>
+   <a class="btn" href="#app-login">Abrir la app</a></div>
+  <div class="card entry"><h2>Plataforma web</h2><p class="muted">Tres roles: tutora (dashboard, avisos, tutorías), Coordinación de Bienestar (reglas, mentores, moderación, reportes) y TI (importación, rendimiento, auditoría).</p>
+   <div class="flow" aria-label="Flujo principal"><a href="#web-login">Ingreso</a><span>→</span><a href="#web-dashboard">Dashboard</a><span>→</span><a href="#web-student">Detalle</a><span>→</span><a href="#web-tutoria">Tutoría</a></div>
+   <a class="btn" href="#web-login">Abrir la plataforma</a></div>
+ </div>
+ <div class="card" style="margin-top:1rem"><h2>Cómo recorrer el prototipo</h2>
+  <ul><li>Los botones y formularios funcionan con datos ficticios; las validaciones muestran mensajes como en la versión final.</li>
+  <li>Cada pantalla muestra su <strong>ficha</strong> (número, HU, descripción, validaciones y restricciones). Puedes ocultarlas con el botón «Fichas».</li>
+  <li>Prueba la accesibilidad con «A+» (texto grande) y «Contraste». Todo se puede usar con el teclado.</li>
+  <li>El <a href="#mapa">mapa de pantallas</a> lista todas las interfaces con su historia de usuario.</li></ul></div>`;
+V["mapa"] = () => { const ids=Object.keys(SCREENS); const hus={}; ids.forEach(id=>SCREENS[id].hu.forEach(h=>(hus[h]=hus[h]||[]).push(SCREENS[id].n)));
+  return `<h1>Mapa de pantallas</h1><p class="muted">28 interfaces · 18 historias de usuario cubiertas</p>
+  <div class="grid g2"><div class="card"><h2>Interfaces</h2><table><thead><tr><th>N.°</th><th>Interfaz</th><th>HU</th></tr></thead><tbody>
+  ${ids.map(id=>`<tr><td>${SCREENS[id].n}</td><td><a href="#${id}">${esc(SCREENS[id].t)}</a><br><small class="muted">${id.startsWith("app")?"App móvil":"Plataforma web"}</small></td><td>${SCREENS[id].hu.map(h=>`<span class="chip hu">${h}</span>`).join(" ")}</td></tr>`).join("")}</tbody></table></div>
+  <div class="card"><h2>Cobertura por historia</h2><table><thead><tr><th>HU</th><th>Interfaces</th></tr></thead><tbody>
+  ${Object.keys(hus).sort().map(h=>`<tr><td><span class="chip hu">${h}</span></td><td>${hus[h].join(", ")}</td></tr>`).join("")}</tbody></table></div></div>`; };
+
+/* ====================== enrutador ====================== */
+function render(){
+  let id = location.hash.slice(1) || "inicio"; if(!V[id]) id = "inicio";
+  if(id==="app-login" && APP.logged && APP.consent) id="app-home";
+  const html = V[id](); if(html==="") return;
+  const view=$("#view"); view.innerHTML = html;
+  $$(".topnav a").forEach(a=>a.toggleAttribute("aria-current", a.dataset.top===(id.startsWith("app")?"app":id.startsWith("web")?"web":id)));
+  if(a11yPending) a11yPending=false; else view.focus({preventScroll:true});
+  window.scrollTo(0,0);
+  document.title = (SCREENS[id]?SCREENS[id].n+" "+SCREENS[id].t+" – ":"")+"RUMBO_UC – Prototipo navegable";
+  bind(id);
+}
+let a11yPending=false;
+function bind(id){
+  const on=(sel,ev,fn)=>{ const e=$(sel); if(e) e.addEventListener(ev,fn); };
+  if(id==="app-login") on("#sso","click",()=>{ $("#sso").disabled=true; $("#sso-state").innerHTML='<p class="hint" style="text-align:center">Conectando con el inicio de sesión institucional…</p>'; setTimeout(()=>{ APP.logged=true; go(APP.consent?"app-home":"app-consent"); },700); });
+  if(id==="app-consent"){ on("#cs-ok","change",e=>$("#cs-go").disabled=!e.target.checked); on("#cs-go","click",()=>{ APP.consent=true; APP.revocado=false; store.set("consent",true); toast("Consentimiento registrado: versión 1.0, 21/11/2026"); go("app-home"); }); }
+  if(id==="app-test"){ const t=APP.test;
+    $$('input[name=q]').forEach(r=>r.addEventListener("change",()=>{ t.r[t.i]=r.value; store.set("test",t); $("#q-err").textContent=""; }));
+    on("#q-prev","click",()=>{ t.i=Math.max(0,t.i-1); store.set("test",t); render(); });
+    on("#q-next","click",()=>{ if(t.r[t.i]===undefined){ $("#q-err").textContent="Elige una respuesta para continuar."; return; } if(t.i===PREG.length-1){ t.done=true; store.set("test",t); go("app-test-result"); } else { t.i++; store.set("test",t); render(); } });
+    on("#q-save","click",()=>{ store.set("test",t); toast("Avance guardado. Puedes continuar cuando quieras."); go("app-home"); }); }
+  if(id==="app-test-result"){ on("#share","change",e=>{ APP.test.share=e.target.checked; store.set("test",APP.test); toast(e.target.checked?"Tu tutora podrá ver tus respuestas.":"Tus respuestas ya no se comparten."); }); on("#retest","click",()=>{ APP.test={i:0,r:{}}; store.set("test",APP.test); go("app-test"); }); }
+  if(id==="app-agenda"){ let sel=null;
+    $$(".slot").forEach(b=>b.addEventListener("click",()=>{ $$(".slot").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); sel=SLOTS[b.dataset.k]; $("#slot-err").textContent=""; }));
+    on("#motivo","input",e=>$("#mot-c").textContent=e.target.value.length);
+    on("#cita-go","click",()=>{ const m=$("#motivo"); let ok=true; if(!sel){ $("#slot-err").textContent="Elige un horario disponible."; ok=false; }
+      if(!setErr(m, m.value.trim().length<10?"Escribe el motivo con al menos 10 caracteres.":"")) ok=false;
+      if(ok){ APP.cita={dia:sel[0],hora:sel[1]}; toast("Solicitud enviada a la Ing. Rosa Quispe"); render(); } }); }
+  if(id==="app-mentor") $$("[data-mentor]").forEach(b=>b.addEventListener("click",()=>{ b.disabled=true; b.textContent="Enviada"; toast("Solicitud enviada. Te avisaremos cuando responda."); setTimeout(()=>{ APP.mentorPedido=b.dataset.mentor; if(location.hash==="#app-mentor") render(); toast(b.dataset.mentor+" aceptó tu solicitud"); },1500); }));
+  if(id==="app-mentor-chat"||id==="app-group-chat") on("#chat-f","submit",e=>{ e.preventDefault(); const i=$("#msg"); const v=i.value.trim();
+      if(!setErr(i, !v?"Escribe un mensaje.":v.length>500?"Máximo 500 caracteres.":"")) return;
+      const k=e.target.dataset.k; CHATS[k].push({me:true,t:v,who:"Tú"}); render(); $("#msg").focus(); });
+  if(id==="app-repo"){ on("#rq","input",e=>{ APP.q=e.target.value; const p=e.target.selectionStart; render(); const n=$("#rq"); n.focus(); n.setSelectionRange(p,p); }); $$("[data-mat]").forEach(a=>a.addEventListener("click",()=>APP.mat=Number(a.dataset.mat))); }
+  if(id==="app-upload"){ let sim=null;
+    on("#up-ok","click",()=>{ sim={name:"resumen_unidad2.pdf", size:1.2e6, virus:false}; $("#up-state").innerHTML='<p class="hint">Archivo simulado: resumen_unidad2.pdf (1.2 MB)</p>'; });
+    on("#up-bad","click",()=>{ sim={name:"apuntes.pdf", size:0.8e6, virus:true}; $("#up-state").innerHTML='<p class="hint">Archivo simulado: apuntes.pdf (0.8 MB)</p>'; });
+    on("#up-f","submit",e=>{ e.preventDefault(); const c=$("#up-curso"), t=$("#up-tit"), f=$("#up-file"); let ok=true;
+      ok = setErr(c, c.value?"":"Selecciona el curso.") && ok;
+      ok = setErr(t, t.value.trim().length<5?"El título debe tener al menos 5 caracteres.":"") && ok;
+      const file = f.files[0] ? {name:f.files[0].name, size:f.files[0].size, virus:false} : sim;
+      let fe=""; if(!file) fe="Adjunta un archivo."; else if(!/\.(pdf|docx|pptx|png|jpe?g)$/i.test(file.name)) fe="Formato no permitido. Usa PDF, DOCX, PPTX, PNG o JPG."; else if(file.size>20*1024*1024) fe="El archivo supera los 20 MB.";
+      ok = setErr(f, fe) && ok; if(!ok) return;
+      $("#up-state").innerHTML='<div class="banner info" role="status">Analizando el archivo con antivirus…</div>';
+      setTimeout(()=>{ if(file.virus){ $("#up-state").innerHTML='<div class="banner bad" role="alert"><div><strong>Archivo bloqueado.</strong> El antivirus detectó una amenaza; el material no se publicó.</div></div>'; return; }
+        MATERIALES.unshift({id:Date.now(), curso:c.value, titulo:t.value.trim(), autor:"Lucía Ramos", tipo:file.name.split(".").pop().toUpperCase(), tam:(file.size/1e6).toFixed(1)+" MB", rating:0, votos:0, comentarios:[], descargado:true});
+        toast("Material publicado en "+c.value); go("app-repo"); },900); }); }
+  if(id==="app-material"){ const m=MATERIALES.find(x=>x.id===(APP.mat||1));
+    $$("[data-star]").forEach(b=>b.addEventListener("click",()=>{ const k=Number(b.dataset.star); m.rating=Math.round(((m.rating*m.votos)+k)/(m.votos+1)*10)/10; m.votos++; m.mio=k; toast("Gracias por tu calificación"); render(); }));
+    on("#com-go","click",()=>{ const c=$("#com"); const v=c.value.trim(); if(!setErr(c, !v?"Escribe un comentario.":"")) return; m.comentarios.unshift(v); render(); });
+    on("#dl","click",()=>{ m.descargado=true; toast(APP.offline?"Abriendo copia descargada":"Material disponible sin conexión"); render(); });
+    on("#rep","click",()=>modal("Reportar material", `<p>¿Por qué quieres reportar «${esc(m.titulo)}»?</p><label for="rp-m">Motivo</label><select id="rp-m"><option value="">Selecciona un motivo</option><option>Contenido incorrecto</option><option>Contenido ofensivo</option><option>Infracción de derechos de autor</option><option>No corresponde al curso</option></select>`,
+      [{label:"Cancelar",cls:"sec"},{label:"Enviar reporte",fn:bg=>{ const s=$("#rp-m",bg); if(!setErr(s, s.value?"":"Selecciona un motivo.")) return false; REPORTES.push({id:Date.now(),material:m.titulo,motivo:s.value,por:"Lucía Ramos",fecha:"2026-11-21"}); toast("Reporte enviado a moderación. Te avisaremos la decisión."); }}])); }
+  if(id==="app-groups"){ $$("[data-join]").forEach(b=>b.addEventListener("click",()=>{ const g=GRUPOS.find(x=>x.id==b.dataset.join); if(g.miembros>=15){ toast("Este grupo está completo."); return; } g.unido=true; g.miembros++; toast("Te uniste a "+g.nombre); render(); }));
+    $$("[data-grp]").forEach(a=>a.addEventListener("click",()=>APP.grp=Number(a.dataset.grp)));
+    on("#g-new","click",()=>modal("Crear grupo de estudio", `<label for="g-n">Nombre del grupo</label><input type="text" id="g-n" maxlength="60"><label for="g-c">Curso</label><select id="g-c"><option value="">Selecciona un curso</option>${CURSOS.map(c=>`<option>${c}</option>`).join("")}</select>`,
+      [{label:"Cancelar",cls:"sec"},{label:"Crear",fn:bg=>{ const n=$("#g-n",bg), c=$("#g-c",bg); const a=setErr(n, n.value.trim().length<5?"Mínimo 5 caracteres.":""); const b=setErr(c, c.value?"":"Selecciona el curso."); if(!(a&&b)) return false; GRUPOS.unshift({id:Date.now(),nombre:n.value.trim(),curso:c.value,miembros:1,unido:true}); toast("Grupo creado"); setTimeout(render,0); }}])); }
+  if(id==="app-profile"){ on("#p-lg","change",e=>setSize(e.target.checked)); on("#p-hc","change",e=>setHC(e.target.checked)); on("#p-off","change",e=>{ APP.offline=e.target.checked; render(); });
+    on("#revoke","click",()=>modal("Revocar consentimiento","<p>Si revocas el consentimiento, dejarás de recibir alertas y tu tutora no verá tu seguimiento académico. Podrás volver a aceptarlo cuando quieras.</p>",[{label:"Cancelar",cls:"sec"},{label:"Revocar",cls:"danger",fn:()=>{ APP.revocado=true; toast("Consentimiento revocado el 21/11/2026"); setTimeout(render,0); }}]));
+    on("#reaccept","click",()=>{ APP.revocado=false; APP.consent=false; go("app-consent"); });
+    on("#logout","click",()=>{ APP.logged=false; go("app-login"); }); }
+  if(id==="web-login") $$("[data-role]").forEach(b=>b.addEventListener("click",()=>{ WEB.role=b.dataset.role; go(MENU[WEB.role][0][0]); }));
+  if(id==="web-dashboard"){ const F=WEB.filtro; const upd=()=>{ F.q=$("#f-q").value; F.nivel=$("#f-n").value; F.curso=$("#f-c").value; F.carrera=$("#f-k").value; const foc=document.activeElement.id; const p=document.activeElement.selectionStart; render(); const n=document.getElementById(foc); if(n){ n.focus(); if(foc==="f-q") n.setSelectionRange(p,p); } };
+    ["#f-n","#f-c","#f-k"].forEach(s=>on(s,"change",upd)); on("#f-q","input",upd);
+    $$("tr[data-st]").forEach(tr=>{ const open=()=>{ WEB.st=Number(tr.dataset.st); go("web-student"); }; tr.addEventListener("click",open); tr.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } }); });
+    on("#otro","click",()=>{ WEB.denied={t:"Detalle de "+OTRO.cod+" (no es tu tutorado)"}; AUDIT.unshift({f:"2026-11-21 "+new Date().toTimeString().slice(0,5),u:"rq.tutor@ejemplo.edu",a:"Ver detalle de estudiante",r:OTRO.cod,res:"Denegado"}); go("web-denegado"); }); }
+  if(id==="web-student") on("#contact","click",()=>{ const a=AVISOS.find(x=>x.st===WEB.st); if(a) a.done=true; toast("Contacto registrado. El aviso pasó a «Atendido»."); });
+  if(id==="web-tutoria"){ on("#tu-a","input",e=>$("#tu-c").textContent=e.target.value.length);
+    on("#tu-f","submit",e=>{ e.preventDefault(); const es=$("#tu-e"), d=$("#tu-d"), s=$("#tu-s"), a=$("#tu-a"); let ok=true;
+      ok=setErr(es, es.value?"":"Selecciona al estudiante.")&&ok;
+      ok=setErr(d, !d.value?"Indica la fecha de la sesión.":d.value>"2026-11-21"?"La fecha de la sesión no puede ser futura.":"")&&ok;
+      ok=setErr(s, s.value && d.value && s.value<=d.value?"La fecha de seguimiento debe ser posterior a la sesión.":"")&&ok;
+      ok=setErr(a, a.value.trim().length<20?"Describe los acuerdos con al menos 20 caracteres.":"")&&ok;
+      if(!ok){ $("[aria-invalid=true]").focus(); return; }
+      TUTORIAS.unshift({est:Number(es.value), fecha:d.value, modalidad:$("#tu-m").value, acuerdos:a.value.trim(), seg:s.value}); store.set("tutorias",TUTORIAS);
+      const av=AVISOS.find(x=>x.st===Number(es.value)); if(av) av.done=true;
+      toast("Tutoría registrada"+(s.value&&$("#tu-r").checked?" · recordatorio programado para el "+s.value:"")); WEB.st=Number(es.value); WEB.pre=null; go("web-student"); }); }
+  if(id==="web-avisos") $$("[data-aviso]").forEach(b=>b.addEventListener("click",()=>{ AVISOS.find(x=>x.st==b.dataset.aviso).done=true; toast("Contacto registrado"); render(); }));
+  if(id==="web-import"){ const show=r=>{ const box=$("#imp-res");
+      if(!r.ok){ box.innerHTML=`<div class="banner bad" role="alert">${esc(r.msg)}</div>`; return; }
+      if(r.errs.length){ box.innerHTML=`<div class="banner bad" role="alert"><div><strong>Carga rechazada.</strong> Se encontraron ${r.errs.length} error(es); no se modificaron los datos existentes.</div></div><table><thead><tr><th>Fila</th><th>Motivo</th></tr></thead><tbody>${r.errs.map(e=>`<tr><td>${e[0]}</td><td>${esc(e[1])}</td></tr>`).join("")}</tbody></table>`; CARGAS.unshift({f:"2026-11-21 "+new Date().toTimeString().slice(0,5),u:"ti.carga@ejemplo.edu",a:r.name,p:0,x:r.errs.length}); }
+      else { box.innerHTML=`<div class="banner ok" role="status"><div><strong>Carga completada.</strong> ${r.p} registros procesados, 0 rechazados. El semáforo se recalculará automáticamente.</div></div>`; CARGAS.unshift({f:"2026-11-21 "+new Date().toTimeString().slice(0,5),u:"ti.carga@ejemplo.edu",a:r.name,p:r.p,x:0}); }
+      store.set("cargas",CARGAS); };
+    const OK="codigo,curso,periodo,evaluacion,nota,asistencia\nU202601000,Matemática Básica,2026-2,PC3,12,80\nU202601037,Matemática Básica,2026-2,PC3,9,62\nU202601074,Física I,2026-2,PC3,14,90\nU202601111,Comunicación,2026-2,PC3,16,95";
+    const BAD="codigo,curso,periodo,evaluacion,nota,asistencia\nU202601000,Matemática Básica,2026-2,PC3,12,80\nU20260XX37,Matemática Básica,2026-2,PC3,9,62\nU202601074,Física I,2026-2,PC3,24,90\nU202601000,Matemática Básica,2026-2,PC3,12,80";
+    on("#imp-ok","click",()=>show(parseCSV(OK,"notas_2026-2_s11.csv"))); on("#imp-bad","click",()=>show(parseCSV(BAD,"notas_con_errores.csv")));
+    on("#imp-f","change",e=>{ const f=e.target.files[0]; if(!f) return; if(!/\.csv$/i.test(f.name)){ setErr(e.target,"Solo se aceptan archivos .csv."); return; } if(f.size>10*1024*1024){ setErr(e.target,"El archivo supera los 10 MB."); return; } setErr(e.target,""); const rd=new FileReader(); rd.onload=()=>show(parseCSV(String(rd.result), f.name)); rd.readAsText(f); }); }
+  if(id==="web-reglas"){ const ids=["#w-a","#w-p","#w-d","#w-i"]; const sum=()=>{ const s=ids.reduce((a,k)=>a+Number($(k).value||0),0); $("#w-sum").textContent=`Suma de pesos: ${s} %`+(s===100?" ✓":" (debe ser 100 %)"); return s; };
+    ids.forEach(k=>on(k,"input",sum)); sum();
+    on("#rg-reset","click",()=>{ RULES={asist:75,prom:11,desap:2,inact:7,w:{asist:35,prom:30,desap:20,inact:15}}; store.set("rules",RULES); render(); toast("Valores restablecidos"); });
+    on("#rg-f","submit",e=>{ e.preventDefault(); let ok=true; [["#r-a",50,100],["#r-p",5,20],["#r-d",1,10],["#r-i",1,60]].forEach(([k,mn,mx])=>{ const v=Number($(k).value); ok=setErr($(k), $(k).value===""||v<mn||v>mx?`Valor entre ${mn} y ${mx}.`:"")&&ok; });
+      if(sum()!==100){ $("#rg-err").textContent="Los pesos deben sumar 100 %."; ok=false; } else $("#rg-err").textContent="";
+      if(!ok) return; const before=STUDENTS.filter(s=>risk(s).nivel==="alto").length;
+      RULES={asist:Number($("#r-a").value),prom:Number($("#r-p").value),desap:Number($("#r-d").value),inact:Number($("#r-i").value),w:{asist:Number($("#w-a").value),prom:Number($("#w-p").value),desap:Number($("#w-d").value),inact:Number($("#w-i").value)}};
+      store.set("rules",RULES); const after=STUDENTS.filter(s=>risk(s).nivel==="alto").length;
+      AUDIT.unshift({f:"2026-11-21 "+new Date().toTimeString().slice(0,5),u:"cb.coord@ejemplo.edu",a:"Modificar reglas del semáforo",r:"Umbrales y pesos",res:"Permitido"});
+      toast(`Reglas guardadas. Estudiantes en riesgo alto: ${before} → ${after}`); }); }
+  if(id==="web-mentores"){ $$("[data-verif]").forEach(b=>b.addEventListener("click",()=>{ const m=MENTORES.find(x=>x.id==b.dataset.verif); m.verif=true; m.afinidad=78; toast(m.nombre+" quedó verificado y puede recibir solicitudes"); render(); }));
+    $$("[data-cert]").forEach(b=>b.addEventListener("click",()=>{ const m=MENTORES.find(x=>x.id==b.dataset.cert); toast("Constancia de "+m.nombre+" generada ("+m.horas+" h) · simulado"); })); }
+  if(id==="web-moderacion"){ $$("[data-keep]").forEach(b=>b.addEventListener("click",()=>{ const i=REPORTES.findIndex(x=>x.id==b.dataset.keep); REPORTES.splice(i,1); toast("Material mantenido; se notificó a quien reportó."); render(); }));
+    $$("[data-del]").forEach(b=>b.addEventListener("click",()=>{ const r=REPORTES.find(x=>x.id==b.dataset.del); modal("Retirar material", `<p>Se retirará «${esc(r.material)}» y se notificará al autor.</p><label for="dm">Motivo para el autor</label><textarea id="dm" maxlength="300">${esc(r.motivo)}</textarea>`,
+      [{label:"Cancelar",cls:"sec"},{label:"Retirar",cls:"danger",fn:bg=>{ const t=$("#dm",bg); if(!setErr(t, t.value.trim().length<10?"Indica el motivo (mínimo 10 caracteres).":"")) return false; REPORTES.splice(REPORTES.indexOf(r),1); toast("Material retirado y autor notificado"); setTimeout(render,0); }}]); })); }
+  if(id==="web-reportes") $$("[data-exp]").forEach(b=>b.addEventListener("click",()=>{ const c=$("#rp-c"), k=$("#rp-k"); const a=setErr(c,c.value?"":"Selecciona la carrera."); const d=setErr(k,k.value?"":"Selecciona el ciclo."); if(a&&d) toast(`Reporte ${b.dataset.exp} generado: ${c.value}, ciclo ${k.value} · simulado`); }));
+  if(id==="web-auditoria") on("#au-f","change",e=>{ WEB.af=e.target.value; render(); $("#au-f").focus(); });
+}
+/* ====================== accesibilidad global ====================== */
+function setSize(v){ document.documentElement.classList.toggle("lg",v); $("#tg-size").setAttribute("aria-pressed",v); store.set("lg",v); }
+function setHC(v){ document.body.classList.toggle("hc",v); $("#tg-hc").setAttribute("aria-pressed",v); store.set("hc",v); }
+$("#tg-size").onclick=()=>{ setSize(!document.documentElement.classList.contains("lg")); a11yPending=true; render(); };
+$("#tg-hc").onclick=()=>{ setHC(!document.body.classList.contains("hc")); a11yPending=true; render(); };
+$("#tg-hu").onclick=e=>{ const v=document.body.classList.toggle("nohu"); e.currentTarget.setAttribute("aria-pressed",!v); };
+$("#tg-ficha").onclick=e=>{ const v=document.body.classList.toggle("nofichas"); e.currentTarget.setAttribute("aria-pressed",!v); };
+setSize(store.get("lg",false)); setHC(store.get("hc",false));
+window.addEventListener("hashchange", render);
+render();
+</script>
+</body>
+</html>

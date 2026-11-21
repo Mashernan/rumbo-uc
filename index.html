@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="RUMBO_UC: producto mínimo viable de alertas tempranas de riesgo académico para estudiantes de primeros ciclos.">
+<link rel="icon" href="assets/icon-192.png">
+<title>RUMBO_UC – Producto mínimo viable</title>
+<link rel="stylesheet" href="assets/rumbo.css">
+</head>
+<body>
+<a class="skip" href="#view">Saltar al contenido</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><img src="assets/icon-192.png" alt="" width="28" height="28" style="border-radius:7px">RUMBO_UC</a>
+  <nav class="topnav" aria-label="Productos"><a href="app.html">App del estudiante</a><a href="web.html">Plataforma web</a><a href="prototipo.html">Prototipo completo</a></nav>
+  <span class="mode" id="modo"></span>
+  <div class="a11y" role="group" aria-label="Opciones de visualización"><button id="tg-size" aria-pressed="false">A+</button><button id="tg-hc" aria-pressed="false">Contraste</button></div>
+</header>
+<main id="view" tabindex="-1">
+ <section class="hero"><h1>RUMBO_UC · Producto mínimo viable</h1>
+  <p>Release 1 «Detectar y alertar»: la importación de notas y asistencia calcula el semáforo de riesgo, avisa a tiempo al estudiante y a su tutora, y registra el seguimiento. Las funciones del Release 2 se muestran en el prototipo navegable.</p></section>
+ <div class="grid g3">
+  <div class="card entry"><h2>App del estudiante</h2><p class="muted">Ingreso, consentimiento, alerta temprana con recomendaciones, test de orientación y privacidad. Se puede instalar en el celular.</p><a class="btn" href="app.html">Abrir la app</a></div>
+  <div class="card entry"><h2>Plataforma web</h2><p class="muted">Tutora: dashboard, detalle, avisos y tutorías. Coordinación: reglas del semáforo y auditoría. TI: importación de datos.</p><a class="btn" href="web.html">Abrir la plataforma</a></div>
+  <div class="card entry"><h2>Prototipo completo</h2><p class="muted">Las 28 interfaces de las 18 historias de usuario, incluidas las del Release 2 (mentoría, repositorio, grupos y reportes).</p><a class="btn sec" href="prototipo.html">Ver prototipo</a></div>
+ </div>
+ <div class="card" style="margin-top:1rem"><h2>Historias de usuario del PMV</h2>
+  <table><thead><tr><th>HU</th><th>Funcionalidad</th><th>Dónde se usa</th></tr></thead><tbody>
+   <tr><td>HU15</td><td>Ingreso y consentimiento informado (aceptar y revocar)</td><td>App</td></tr>
+   <tr><td>HU01</td><td>Importación de notas y asistencia desde CSV, con validación todo o nada</td><td>Web · TI</td></tr>
+   <tr><td>HU05</td><td>Test de orientación con guardar y continuar, y resultado personalizado</td><td>App</td></tr>
+   <tr><td>HU02</td><td>Semáforo de riesgo con factores y reglas configurables</td><td>Web · tutora y coordinación</td></tr>
+   <tr><td>HU17</td><td>Seguridad por rol en la base de datos y auditoría de accesos</td><td>App y web</td></tr>
+   <tr><td>HU06</td><td>Dashboard del tutor con filtros y tendencia</td><td>Web · tutora</td></tr>
+   <tr><td>HU03</td><td>Alerta temprana al estudiante con recomendaciones</td><td>App</td></tr>
+   <tr><td>HU07</td><td>Registro de tutorías con plan de acción y seguimiento</td><td>Web · tutora</td></tr>
+   <tr><td>HU04</td><td>Avisos de riesgo alto y escalamiento a las 72 horas</td><td>Web · tutora y coordinación</td></tr>
+  </tbody></table></div>
+ <p class="hint" style="margin-top:1rem">Todos los nombres y datos son ficticios. Proyecto académico del curso Taller de Proyectos II.</p>
+</main>
+<script src="config.js"></script>
+<script src="assets/rumbo-core.js"></script>
+<script>
+initA11y();
+const cfg = window.RUMBO_CONFIG || {}; const live = cfg.url && cfg.anonKey;
+document.getElementById("modo").textContent = live ? "Conectado a Supabase" : "Modo demostración";
+document.getElementById("modo").classList.toggle("live", !!live);
+</script>
+</body>
+</html>

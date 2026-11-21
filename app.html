@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b5563">
+<meta name="description" content="RUMBO_UC para estudiantes: alertas tempranas, test de orientación y apoyo académico.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RUMBO_UC">
+<title>RUMBO_UC – App del estudiante</title>
+<link rel="stylesheet" href="assets/rumbo.css">
+</head>
+<body>
+<a class="skip" href="#view">Saltar al contenido</a>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="RUMBO_UC, volver al inicio del PMV"><img src="assets/icon-192.png" alt="" width="28" height="28" style="border-radius:7px">RUMBO_UC</a>
+  <nav class="topnav" aria-label="Productos"><a href="app.html" aria-current="page">App del estudiante</a><a href="web.html">Plataforma web</a><a href="prototipo.html">Prototipo completo</a></nav>
+  <span class="mode" id="modo"></span>
+  <div class="a11y" role="group" aria-label="Opciones de visualización"><button id="tg-size" aria-pressed="false" title="Aumentar el tamaño del texto">A+</button><button id="tg-hc" aria-pressed="false" title="Alto contraste">Contraste</button></div>
+</header>
+<main id="view" tabindex="-1"></main>
+<div id="toasts" aria-live="polite"></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/rumbo-core.js"></script>
+<script>
+"use strict";
+const api = crearApi();
+const A11Y = initA11y();
+const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone || window.innerWidth <= 480;
+if (standalone) document.body.classList.add("standalone");
+$("#modo").textContent = api.modo === "supabase" ? "Conectado a Supabase" : "Modo demostración";
+$("#modo").classList.toggle("live", api.modo === "supabase");
+let U = null, R = null, testLocal = null;
+
+const icon = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  test:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.6.2 4.6 1.9 5.4 5.4"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.4 4.2-6.5 8-6.5s7 2.1 8 6.5"/></svg>'
+};
+const TABS = [["inicio","Inicio",icon.home],["test","Test",icon.test],["tutoria","Tutoría",icon.cal],["comunidad","Comunidad",icon.people],["perfil","Perfil",icon.user]];
+const TABMAP = {alerta:"inicio", resultado:"test"};
+function phone(id, title, inner, opts = {}){
+  const tabs = opts.notabs ? "" : `<nav class="tabbar" aria-label="Navegación de la app">${TABS.map(([h,l,ic]) => `<a href="#${h}" ${(TABMAP[id]||id)===h?'aria-current="page"':''}>${ic}<span>${l}</span></a>`).join("")}</nav>`;
+  const back = opts.back ? `<button class="back" aria-label="Volver" onclick="go('${opts.back}')">‹</button>` : "";
+  const side = standalone ? "" : `<aside class="card ficha" aria-label="Información del PMV">${sidePanel()}</aside>`;
+  return `<div class="app-stage"><section class="phone" aria-label="App RUMBO_UC: ${esc(title)}">
+    <div class="appbar">${back}<h1>${esc(title)}</h1></div>
+    <div class="app-content" id="app-content">${inner}</div>${tabs}</section>${side}</div>`;
+}
+function sidePanel(){
+  return `<h3>App del estudiante · PMV</h3>
+  <p>Funciona con ${api.modo === "supabase" ? "<strong>datos reales en Supabase</strong>: lo que hagas aquí lo ve la tutora en la plataforma web." : "<strong>datos de demostración</strong> guardados en este navegador. Abre la plataforma web en otra pestaña para ver los cambios."}</p>
+  <dl><dt>Funciones del PMV (Release 1)</dt><dd><ul><li>HU15 Ingreso y consentimiento</li><li>HU03 Alerta temprana</li><li>HU05 Test de orientación</li><li>HU17 Privacidad de datos</li><li>HU18 Accesibilidad (A+, contraste)</li></ul></dd>
+  <dt>Release 2 (prototipo)</dt><dd>Tutoría, mentoría y comunidad de estudio.</dd>
+  <dt>Instalar en el celular</dt><dd>Abre esta página en el celular y usa «Agregar a pantalla de inicio» o «Instalar app».</dd></dl>
+  ${api.modo === "demo" ? `<button class="btn sec sm" id="reset-demo">Reiniciar datos de demostración</button>` : ""}`;
+}
+
+/* ===================== pantallas ===================== */
+const V = {};
+V.login = () => phone("login","Bienvenida", `
+  <div style="text-align:center;padding:1rem .5rem .5rem"><img src="assets/icon-192.png" alt="" width="72" height="72" style="border-radius:18px">
+   <h2 style="margin-top:.8rem">Tu rumbo en la universidad</h2><p class="muted">Alertas a tiempo, tutoría y apoyo para tus primeros ciclos.</p></div>
+  <form id="lg-f" novalidate>
+   <label for="lg-e">Correo institucional</label><input type="email" id="lg-e" autocomplete="username" placeholder="tu.correo@universidad.edu.pe">
+   <label for="lg-p">Contraseña</label><input type="password" id="lg-p" autocomplete="current-password">
+   <div id="lg-err" class="err" role="alert"></div>
+   <button class="btn block" style="margin-top:.9rem" id="lg-go">Ingresar</button></form>
+  ${api.modo === "demo" ? `<div class="banner info" style="margin-top:1rem"><div>Modo demostración: <button class="btn ghost sm" id="lg-demo">entrar como Lucía Ramos (estudiante)</button></div></div>` : `<p class="hint" style="margin-top:.8rem">Cuenta de prueba del PMV: la encontrarás en el informe del proyecto. En la versión final, el ingreso se hará con el SSO institucional.</p>`}`, {notabs:true});
+V.consentimiento = () => phone("consentimiento","Uso de tus datos", `
+  <p>Antes de empezar, queremos contarte qué datos usamos y para qué.</p>
+  <div class="app-card"><h3>Qué usamos</h3><ul style="padding-left:1.1rem;margin:.2rem 0"><li>Tus notas y tu asistencia, para detectar a tiempo si necesitas apoyo.</li><li>Tus respuestas del test de orientación, solo si decides compartirlas.</li></ul></div>
+  <div class="app-card"><h3>Qué no usamos</h3><p style="margin:0">Origen, salud ni nivel socioeconómico.</p></div>
+  <div class="app-card"><h3>Tus derechos</h3><p style="margin:0">Puedes revocar este consentimiento cuando quieras desde tu perfil (Ley N.° 29733).</p></div>
+  <label class="check"><input type="checkbox" id="cs-ok"> He leído y acepto el uso de mis datos académicos para recibir alertas y apoyo.</label>
+  <button class="btn block" id="cs-go" disabled style="margin-top:.8rem">Aceptar y continuar</button>
+  <button class="btn ghost block" id="cs-out">Salir</button>
+  <p class="hint">Versión del consentimiento: 1.0</p>`, {notabs:true});
+V.inicio = () => { const r = R.riesgo; const a = R.alertas[0]; const t = R.test || {}; const nResp = Object.keys(t.respuestas || {}).length;
+  return phone("inicio", "Hola, " + R.estudiante.nombres.split(" ")[0], `
+  ${R.consentimiento.revocado ? '<div class="banner warn" role="status">Revocaste el consentimiento: las alertas y el seguimiento están desactivados. Puedes volver a aceptarlo desde tu perfil.</div>' : ""}
+  ${a && r && r.nivel !== "bajo" ? `<a class="app-card" href="#alerta" style="display:block;text-decoration:none;color:inherit;border-left:5px solid var(--accent)">
+     <div class="row"><strong>${a.leida ? "Tu recomendación" : "Tienes una alerta nueva"}</strong><span class="spacer"></span>${lvl(r.nivel)}</div>
+     <p style="margin:.4rem 0 0">Detectamos algunas señales en tus cursos. Aún estás a tiempo: te ayudamos a retomar el ritmo. <u>Ver qué puedo hacer</u></p>
+     <small class="muted">${fmtFecha(a.fecha)}</small></a>`
+   : !R.consentimiento.revocado ? `<div class="app-card" style="border-left:5px solid var(--ok)"><strong>¡Vas bien!</strong><p class="muted" style="margin:.3rem 0 0">No tienes alertas. Sigue así.</p></div>` : ""}
+  <div class="app-card"><div class="row"><strong>Test de orientación</strong><span class="spacer"></span>${t.completado ? '<span class="chip bajo">Completado</span>' : `<span class="chip neutral">${nResp}/${PREG.length}</span>`}</div>
+   <p class="muted" style="margin:.3rem 0 .6rem">Descubre tu forma de estudiar y recibe consejos personalizados.</p>
+   <a class="btn sec sm" href="#${t.completado ? "resultado" : "test"}">${t.completado ? "Ver resultado" : nResp ? "Continuar test" : "Empezar test"}</a></div>
+  <div class="app-card"><strong>Tu tutora</strong><p style="margin:.3rem 0 .4rem">${esc(R.tutor || "Por asignar")}</p><a class="btn sec sm" href="#tutoria">Agendar tutoría</a></div>
+  <button class="btn ghost block" id="refresh">Actualizar</button>`); };
+V.alerta = () => { const r = R.riesgo; if (!r) return phone("alerta","Tu alerta", `<div class="banner info">No tienes alertas activas.</div>`, {back:"inicio"});
+  const f = r.factores; const recs = [];
+  if (f.asistencia.fuera) recs.push(["Conversa con tu tutora", `Agenda una tutoría con ${esc(R.tutor || "tu tutora")} para armar un plan.`, "tutoria"]);
+  if (f.promedio.fuera || f.desaprobadas.fuera) recs.push(["Asiste a una asesoría", `Refuerza ${esc(R.curso_critico || "tus cursos")} en las asesorías académicas.`, "tutoria"]);
+  if (f.inactividad.fuera) recs.push(["Vuelve al aula virtual", "Revisa las clases y tareas pendientes de esta semana.", null]);
+  recs.push(["Conoce tu forma de estudiar", "El test de orientación te da consejos personalizados.", "test"]);
+  return phone("alerta","Tu alerta", `
+  <div class="banner warn"><div><strong>Vamos a tiempo</strong><br>Detectamos algunas señales en tus cursos. Muchos estudiantes pasaron por esto y lo superaron con un poco de apoyo.</div></div>
+  <h2>Lo que notamos</h2><ul style="padding-left:1.1rem">
+   ${f.asistencia.fuera ? `<li>Tu asistencia promedio es ${f.asistencia.valor} % (lo recomendado es ${f.asistencia.umbral} % o más).</li>` : ""}
+   ${f.promedio.fuera ? `<li>Tu promedio parcial (${f.promedio.valor}) puede mejorar.</li>` : ""}
+   ${f.desaprobadas.fuera ? `<li>Tienes ${f.desaprobadas.valor} evaluaciones por reforzar.</li>` : ""}
+   ${f.inactividad.fuera ? `<li>No ingresas al aula virtual hace ${f.inactividad.valor} días.</li>` : ""}</ul>
+  <h2>Lo que puedes hacer</h2>
+  ${recs.map(x => `<div class="app-card"><strong>${x[0]}</strong><p class="muted" style="margin:.2rem 0 ${x[2] ? ".5rem" : "0"}">${x[1]}</p>${x[2] ? `<button class="btn sm" onclick="go('${x[2]}')">Ir ahora</button>` : ""}</div>`).join("")}
+  <p class="hint">Calculado el ${fmtFecha(r.fecha)}. Tu tutora también fue informada para apoyarte.</p>`, {back:"inicio"}); };
+const PREG = [
+ ["¿Cuántas horas a la semana estudias fuera de clase?",["Menos de 3","De 3 a 6","De 7 a 10","Más de 10"]],
+ ["¿Tienes un horario fijo para estudiar?",["Nunca","A veces","Casi siempre","Siempre"]],
+ ["¿Dónde estudias con mayor frecuencia?",["En casa, con distracciones","En el transporte o el trabajo","En casa, en un lugar tranquilo","En la biblioteca"]],
+ ["Cuando no entiendes un tema, ¿qué haces primero?",["Lo dejo para después","Busco videos o internet","Pregunto a un compañero","Consulto al docente"]],
+ ["¿Cómo preparas un examen?",["La noche anterior","Dos o tres días antes","Repaso cada semana","Con resúmenes y ejercicios"]],
+ ["¿Cómo te organizas con tus tareas?",["No uso nada","De memoria","Agenda o celular","Planificador semanal"]],
+ ["¿Cuántas horas trabajas a la semana además de estudiar?",["Más de 20 h","De 10 a 20 h","Menos de 10 h","No trabajo"]],
+ ["¿Te sientes seguro de haber elegido tu carrera?",["Nada seguro","Poco seguro","Bastante seguro","Muy seguro"]],
+ ["¿Conoces los servicios de tutoría de tu universidad?",["No los conozco","Los conozco, no los uso","Los usé una vez","Los uso con frecuencia"]],
+ ["¿Cuánto tiempo pasas en redes sociales mientras estudias?",["Casi todo el tiempo","Bastante","Poco","Nada"]],
+ ["¿Cuánto descansas antes de un día de clases?",["Menos de 5 h","De 5 a 6 h","De 7 a 8 h","Más de 8 h"]],
+ ["¿Con quién estudias normalmente?",["Siempre solo y me cuesta","Solo, sin problema","A veces en grupo","En grupo con frecuencia"]]
+];
+const AREAS = [["Organización del tiempo",[0,1,5]],["Técnicas de estudio",[3,4]],["Entorno y bienestar",[2,6,9,10]],["Vocación y apoyo",[7,8,11]]];
+function resultadoTest(resp){
+  const pts = AREAS.map(([n, ix]) => [n, Math.round(ix.reduce((a, i) => a + Number(resp[i] || 0), 0) / (ix.length * 3) * 100)]);
+  const tot = Math.round(pts.reduce((a, p) => a + p[1], 0) / pts.length);
+  const perfil = tot >= 70 ? "Estudiante organizado" : tot >= 45 ? "Estudiante en construcción" : "Estudiante por organizar";
+  return {perfil, total:tot, areas:pts};
+}
+const CONSEJOS = {"Organización del tiempo":"Arma un horario semanal con bloques de 50 minutos y 10 de descanso, a la misma hora cada día.",
+  "Técnicas de estudio":"Repasa cada semana con un resumen corto por curso y practica con ejercicios antes de los exámenes.",
+  "Entorno y bienestar":"Busca un lugar tranquilo, silencia el celular mientras estudias y duerme al menos 7 horas.",
+  "Vocación y apoyo":"Conversa con tu tutora sobre tu carrera y aprovecha las tutorías y los grupos de estudio."};
+V.test = () => { const t = testLocal; const i = Math.min(t.avance, PREG.length - 1); const q = PREG[i]; const n = Object.keys(t.respuestas).length; const pct = Math.round(n / PREG.length * 100);
+  return phone("test","Test de orientación", `
+  <div class="row" style="margin-bottom:.3rem"><small>Pregunta ${i + 1} de ${PREG.length}</small><span class="spacer"></span><small>${pct} %</small></div>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Avance del test"><span style="width:${pct}%"></span></div>
+  <fieldset style="border:0;padding:0;margin:1rem 0 0"><legend style="font-weight:700;font-size:1.05rem;margin-bottom:.4rem">${esc(q[0])}</legend>
+  ${q[1].map((o, k) => `<label class="opt"><input type="radio" name="q" value="${k}" ${t.respuestas[i] == k ? "checked" : ""}> ${esc(o)}</label>`).join("")}</fieldset>
+  <div id="q-err" class="err" role="alert"></div>
+  <div class="row" style="margin-top:1rem"><button class="btn sec" id="q-prev" ${i === 0 ? "disabled" : ""}>Anterior</button><span class="spacer"></span><button class="btn" id="q-next">${i === PREG.length - 1 ? "Ver resultado" : "Siguiente"}</button></div>
+  <button class="btn ghost block" id="q-save" style="margin-top:.6rem">Guardar y continuar después</button>
+  <p class="hint">Tus respuestas son confidenciales. Solo tu tutora las verá si tú lo autorizas.</p>`, {back:"inicio"}); };
+V.resultado = () => { const t = R.test; if (!t || !t.completado) return phone("resultado","Resultado del test", `<div class="banner info">Completa el test para ver tu resultado.</div><a class="btn" href="#test">Ir al test</a>`, {back:"inicio"});
+  const res = resultadoTest(t.respuestas); const debiles = res.areas.slice().sort((a, b) => a[1] - b[1]).slice(0, 2);
+  return phone("resultado","Tu resultado", `
+  <div class="app-card" style="border-left:5px solid var(--brand)"><small class="muted">Tu perfil de estudio</small><h2 style="margin:.2rem 0">${res.perfil}</h2><p style="margin:0">Puntaje general: ${res.total} / 100</p></div>
+  <div class="app-card"><h3>Tus áreas</h3>${res.areas.map(([n, p]) => `<div style="margin:.5rem 0"><div class="row"><span>${n}</span><span class="spacer"></span><strong>${p}</strong></div><div class="bar" role="img" aria-label="${n}: ${p} de 100"><span style="width:${p}%;background:${p >= 70 ? "var(--ok)" : p >= 45 ? "#d68a00" : "var(--bad)"}"></span></div></div>`).join("")}</div>
+  <h2>Recomendaciones para ti</h2>${debiles.map(([n], k) => `<div class="app-card"><strong>${k + 1}. ${n}</strong><p class="muted" style="margin:.2rem 0 0">${CONSEJOS[n]}</p></div>`).join("")}
+  <label class="check"><input type="checkbox" id="share" ${t.compartir ? "checked" : ""}> Autorizo compartir mi resultado con mi tutora</label>
+  <p class="hint">Si no lo autorizas, tu tutora solo verá que completaste el test.</p>
+  <button class="btn sec block" id="retest" style="margin-top:.6rem">Volver a hacer el test</button>`, {back:"inicio"}); };
+V.perfil = () => phone("perfil","Mi perfil", `
+  <div class="app-card row"><div class="avatar" aria-hidden="true">${esc(R.estudiante.nombres.split(" ").map(x => x[0]).join("").slice(0, 2))}</div><div><strong>${esc(R.estudiante.nombres)}</strong><br><small class="muted">${esc(R.estudiante.codigo)} · ${esc(R.estudiante.carrera)} · ${R.estudiante.ciclo}.° ciclo</small></div></div>
+  <div class="app-card"><h3>Accesibilidad</h3>
+   <label class="check"><input type="checkbox" id="p-lg" ${document.documentElement.classList.contains("lg") ? "checked" : ""}> Texto más grande</label>
+   <label class="check"><input type="checkbox" id="p-hc" ${document.body.classList.contains("hc") ? "checked" : ""}> Alto contraste</label></div>
+  <div class="app-card"><h3>Privacidad</h3>
+   <p style="margin:.2rem 0">Consentimiento: ${R.consentimiento.activo ? '<span class="chip bajo">Aceptado · versión 1.0</span>' : '<span class="chip alto">Revocado</span>'}</p>
+   ${R.consentimiento.activo ? '<button class="btn danger sm" id="revoke" style="margin-top:.4rem">Revocar consentimiento</button>' : '<button class="btn sm" id="reaccept" style="margin-top:.4rem">Volver a aceptar</button>'}</div>
+  <button class="btn sec block" id="logout">Cerrar sesión</button>`);
+const r2 = (id, title, hu, texto, enlaces) => phone(id, title, `
+  <span class="chip r2c">Release 2 · Sprints 4 a 6</span>
+  <h2 style="margin-top:.6rem">${esc(title)}</h2><p>${texto}</p>
+  <div class="app-card r2"><p style="margin:0 0 .6rem">Esta función no forma parte del PMV. Puedes ver cómo funcionará en el prototipo navegable:</p>
+  ${enlaces.map(([h, t]) => `<a class="btn sec sm" style="margin:.2rem 0" href="prototipo.html#${h}">${t}</a>`).join("<br>")}</div>
+  <p class="hint">Historias: ${hu}</p>`);
+V.tutoria = () => r2("tutoria","Agenda de tutorías","HU08","Pronto podrás elegir un horario libre de tu tutora y recibir recordatorios. Mientras tanto, tu tutora te contactará cuando recibas una alerta.", [["app-agenda","Ver prototipo de la agenda"]]);
+V.comunidad = () => r2("comunidad","Mentoría y comunidad","HU09, HU11, HU12 y HU13","Conectarás con un mentor de ciclos avanzados, compartirás material por curso y formarás grupos de estudio.", [["app-mentor","Prototipo de mentoría"],["app-repo","Prototipo del repositorio"],["app-groups","Prototipo de grupos de estudio"]]);
+
+/* ===================== enrutador ===================== */
+async function cargar(){ R = await api.miResumen(); }
+async function render(){
+  const view = $("#view");
+  let id = location.hash.slice(1) || "inicio";
+  if (!V[id]) id = "inicio";
+  try {
+    U = await api.usuario();
+    if (!U) id = "login";
+    else if (U.rol !== "estudiante") { view.innerHTML = phone("x","Cuenta no válida", `<div class="banner warn">Esta app es para estudiantes. Tu cuenta tiene el rol «${esc(U.rol)}»: usa la <a href="web.html">plataforma web</a>.</div><button class="btn sec" id="logout">Cerrar sesión</button>`, {notabs:true}); bind("perfil"); return; }
+    else {
+      if (!R || id === "inicio" || id === "perfil" || id === "consentimiento") await cargar();
+      if (!R.estudiante) { view.innerHTML = phone("x","Sin datos", `<div class="banner warn">Tu cuenta aún no está vinculada a un registro de estudiante. Contacta a Coordinación de Bienestar.</div><button class="btn sec" id="logout">Cerrar sesión</button>`, {notabs:true}); bind("perfil"); return; }
+      if (!R.consentimiento.activo && !R.consentimiento.revocado && id !== "consentimiento") id = "consentimiento";
+      if (R.consentimiento.revocado && ["alerta","test","resultado"].includes(id)) id = "inicio";
+      if (id === "test") { if (!testLocal) { const t = R.test || {}; testLocal = {respuestas:Object.assign({}, t.respuestas || {}), avance:t.completado ? 0 : (t.avance || 0), compartir:!!t.compartir}; } }
+      if (id === "alerta" && R.alertas[0] && !R.alertas[0].leida) { api.marcarLeida(R.alertas[0].id).catch(() => {}); R.alertas[0].leida = true; }
+    }
+    if (location.hash.slice(1) !== id && !(id === "inicio" && !location.hash)) history.replaceState(null, "", "#" + id);
+    view.innerHTML = V[id]();
+    document.title = "RUMBO_UC – " + ({login:"Ingreso", consentimiento:"Consentimiento", inicio:"Inicio", alerta:"Alerta", test:"Test", resultado:"Resultado", perfil:"Perfil", tutoria:"Tutoría", comunidad:"Comunidad"}[id] || "App");
+    const c = $("#app-content"); if (c) c.scrollTop = 0;
+    bind(id);
+  } catch (e) { view.innerHTML = phone("x","Algo salió mal", `<div class="banner bad" role="alert">${esc(msgError(e))}</div><button class="btn" onclick="render()">Reintentar</button>`, {notabs:true}); }
+}
+window.render = render;
+function bind(id){
+  const on = (s, ev, fn) => { const e = $(s); if (e) e.addEventListener(ev, fn); };
+  on("#reset-demo","click",() => { api.reiniciar(); R = null; testLocal = null; toast("Datos de demostración reiniciados"); go("login"); });
+  if (id === "login") {
+    const entrar = async (email, pass) => { const b = $("#lg-go"); b.disabled = true; b.textContent = "Ingresando…"; $("#lg-err").textContent = "";
+      try { await api.login(email, pass); R = null; testLocal = null; go("inicio"); } catch (e) { $("#lg-err").textContent = msgError(e); b.disabled = false; b.textContent = "Ingresar"; } };
+    on("#lg-f","submit", e => { e.preventDefault(); const em = $("#lg-e"), pw = $("#lg-p");
+      const a = setErr(em, !em.value.trim() ? "Escribe tu correo." : !/^\S+@\S+\.\S+$/.test(em.value.trim()) ? "El correo no tiene un formato válido." : "");
+      const b = setErr(pw, pw.value ? "" : "Escribe tu contraseña."); if (a && b) entrar(em.value.trim(), pw.value); });
+    on("#lg-demo","click", () => entrar("estudiante@rumbo.test","demo"));
+  }
+  if (id === "consentimiento") { on("#cs-ok","change", e => $("#cs-go").disabled = !e.target.checked);
+    on("#cs-go","click", async () => { $("#cs-go").disabled = true; try { await api.aceptarConsentimiento(); R = null; toast("Consentimiento registrado (versión 1.0)"); go("inicio"); } catch (e) { toast(msgError(e)); $("#cs-go").disabled = false; } });
+    on("#cs-out","click", async () => { await api.logout(); go("login"); }); }
+  if (id === "inicio") on("#refresh","click", async () => { R = null; await render(); toast("Información actualizada"); });
+  if (id === "test") { const t = testLocal;
+    const guardar = async (completado) => { const res = completado ? resultadoTest(t.respuestas) : null;
+      await api.guardarTest({respuestas:t.respuestas, avance:t.avance, completado, resultado: res ? `${res.perfil} (${res.total}/100)` : null, compartir:t.compartir}); };
+    $$('input[name=q]').forEach(r => r.addEventListener("change", () => { t.respuestas[t.avance] = r.value; $("#q-err").textContent = ""; guardar(false).catch(() => {}); }));
+    on("#q-prev","click", () => { t.avance = Math.max(0, t.avance - 1); render(); });
+    on("#q-next","click", async () => { if (t.respuestas[t.avance] === undefined) { $("#q-err").textContent = "Elige una respuesta para continuar."; return; }
+      if (t.avance === PREG.length - 1) { try { await guardar(true); testLocal = null; R = null; await cargar(); go("resultado"); } catch (e) { toast(msgError(e)); } }
+      else { t.avance++; guardar(false).catch(() => {}); render(); } });
+    on("#q-save","click", async () => { try { await guardar(false); toast("Avance guardado. Puedes continuar cuando quieras."); testLocal = null; R = null; go("inicio"); } catch (e) { toast(msgError(e)); } }); }
+  if (id === "resultado") {
+    on("#share","change", async e => { const t = R.test; try { await api.guardarTest({respuestas:t.respuestas, avance:t.avance, completado:true, resultado:t.resultado, compartir:e.target.checked}); t.compartir = e.target.checked;
+      toast(e.target.checked ? "Tu tutora podrá ver tu resultado." : "Tu resultado ya no se comparte."); } catch (er) { toast(msgError(er)); e.target.checked = !e.target.checked; } });
+    on("#retest","click", () => { testLocal = {respuestas:{}, avance:0, compartir:R.test.compartir}; go("test"); }); }
+  if (id === "perfil") {
+    on("#p-lg","change", e => A11Y.setSize(e.target.checked)); on("#p-hc","change", e => A11Y.setHC(e.target.checked));
+    on("#revoke","click", () => modal("Revocar consentimiento", "<p>Si revocas el consentimiento, dejarás de recibir alertas y tu tutora no verá tu seguimiento académico. Podrás volver a aceptarlo cuando quieras.</p>",
+      [{label:"Cancelar", cls:"sec"}, {label:"Revocar", cls:"danger", fn: async () => { try { await api.revocarConsentimiento(); R = null; toast("Consentimiento revocado"); setTimeout(render, 0); } catch (e) { toast(msgError(e)); return false; } }}]));
+    on("#reaccept","click", async () => { try { await api.aceptarConsentimiento(); R = null; toast("Consentimiento aceptado"); render(); } catch (e) { toast(msgError(e)); } });
+    on("#logout","click", async () => { await api.logout(); R = null; testLocal = null; go("login"); });
+  }
+}
+window.addEventListener("hashchange", render);
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+render();
+</script>
+</body>
+</html>
