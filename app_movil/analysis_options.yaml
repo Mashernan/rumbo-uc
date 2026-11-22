@@ -1,0 +1,4 @@
+# Reglas por defecto del analizador de Dart (sin paquetes de lints adicionales).
+analyzer:
+  exclude:
+    - build/**
