@@ -1,0 +1,56 @@
+name: Compilar APK RUMBO_UC
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app_movil/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app_movil
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generar carpeta Android
+        run: flutter create . --platforms=android --org pe.rumbouc --project-name rumbo_uc
+
+      - name: Permiso de Internet, nombre e ícono
+        run: |
+          MAN=android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.INTERNET' $MAN || sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' $MAN
+          sed -i 's#android:label="[^"]*"#android:label="RUMBO_UC"#' $MAN
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp icono/ic_launcher-$d.png android/app/src/main/res/mipmap-$d/ic_launcher.png
+          done
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Revisión del código
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      - name: Pruebas
+        run: flutter test
+
+      - name: Compilar APK
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RUMBO_UC-apk
+          path: app_movil/build/app/outputs/flutter-apk/app-release.apk
